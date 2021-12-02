@@ -1,13 +1,16 @@
 /*  G::= F
-    F::= V {with} {V,}* begin {K | S}* 'lilEnd'
+    F::= V 'with' {V,}* begin {K | S}* 'lilEnd'
     K::= VasyaSniff | NextSniff | Homyak | Hire 
-    S::= (V 'in' E) | (E 'to' V) | E '$'
-    E::= T{[+-]T} *
-    T::= P{[*\]P} *
-    P::= '('E')' | V '('E {,E}*')' | V  | N
+    S::= (V 'in' E) | (E 'to' V) | E EOL_OP
+    E::= T{[+-]T}*
+    T::= {-}DEG{[*\]DEG}*
+    DEG::= P{^P}
+    P::= 'LEFT_ROUND_OP' E 'RIGHT_ROUND_OP' | V 'LEFT_ROUND_OP' E {,E}* 'RIGHT_ROUND_OP' | V | N
     V::= TYPE_VAR
     N::= TYPE_CONST
 */
+
+//!РЕТЁРН ДОЛЖЕН ТАКЖЕ ЖРАТЬ ЧИСЛОВЫЕ ВЫРАЖЕНИЯ
 
 #include "Calc.h"
 
@@ -87,7 +90,7 @@ Node* GetF(Node** pointer) {
 
             while (((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN)) {
                 if (!firstTimeFlag) {
-                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == ',')) {
+                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {
                         bottomPtr->right = *pointer;
                         bottomPtr = *pointer;
 
@@ -105,6 +108,16 @@ Node* GetF(Node** pointer) {
         Node* bottom = retValue->right;
 
         while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+            switch ((**pointer).type) {
+                case TYPE_VAR:
+                case TYPE_FUNC:
+                    printf("GetS looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+                    break;
+                default:
+                    printf("GetS looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+                    break;
+            }
+
             bottom->right = ((**pointer).type == TYPE_KEYWORD) ? GetK(pointer) : GetS(pointer);
             bottom = bottom->right;
         }
@@ -120,6 +133,13 @@ Node* GetK(Node** pointer) {
     Node* retValue = *pointer;
 
     switch ((**pointer).data.operation) {
+        case KEY_RETURN:
+            (*pointer)++;
+            retValue->left = GetS(pointer);
+            printf("EXIT FROM SPIT\n");
+            return retValue;
+
+            break;
         case KEY_WHILE:
         case KEY_IF:
             (*pointer)++;
@@ -176,6 +196,16 @@ Node* GetK(Node** pointer) {
         (*pointer)++;
     }
     else {
+        switch ((**pointer).type) {
+        case TYPE_VAR:
+        case TYPE_FUNC:
+            printf("GetK looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+            break;
+        default:
+            printf("GetK looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+            break;
+        }
+
         assert(FAIL && "BEGIN AFTER KEYWORD EXPRESSION NOT FOUND");
     }
 
@@ -203,7 +233,7 @@ Node* GetK(Node** pointer) {
         }
         (*pointer)++;
     }
-    Node* connector = MakeNewNode('$', 0, TYPE_UNO, retValue, 0);
+    Node* connector = MakeNewNode(EOL_OP, 0, TYPE_UNO, retValue, 0);
     retValue = connector;
 
     return retValue;
@@ -214,6 +244,16 @@ Node* GetS(Node** pointer) {
     assert(*pointer != nullptr);
 
     Node* retValue       = 0;
+
+    switch ((**pointer).type) {
+        case TYPE_VAR:
+        case TYPE_FUNC:
+            printf("GetS looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+            break;
+        default:
+            printf("GetS looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+            break;
+    }
 
     if (((**pointer).type == TYPE_VAR) &&
         ((*(*pointer + 1)).type == TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_IN)) {
@@ -238,13 +278,23 @@ Node* GetS(Node** pointer) {
         }
     }
     
-    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == '$')) {
+    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == EOL_OP)) {
         (*pointer)->left = retValue;
         retValue = *pointer;
 
         (*pointer)++;
     }
     else {
+        switch ((**pointer).type) {
+            case TYPE_VAR:
+            case TYPE_FUNC:
+                printf("Error while looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+                break;
+            default:
+                printf("Error while looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+                break;
+        }
+
         assert(FAIL && "SYNTAX ERROR, EOL NOT FOUND");
     }
 
@@ -257,7 +307,13 @@ Node* GetE(Node** pointer) {
 
     Node* retValue = GetT(pointer);
     
-    while((((**pointer).data.operation == '+') || ((**pointer).data.operation == '-')) &&
+    while((((**pointer).data.operation == ADD_OP) || 
+           ((**pointer).data.operation == SUB_OP) || 
+           ((**pointer).data.operation == LEQ_OP) ||
+           ((**pointer).data.operation == L_OP)   ||
+           ((**pointer).data.operation == GEQ_OP) ||
+           ((**pointer).data.operation == G_OP)   ||
+           ((**pointer).data.operation == DEQ_OP)) &&
            ((**pointer).type == TYPE_OP)) {
         Node*  operationNode = *pointer;
         (*pointer)++;
@@ -277,19 +333,38 @@ Node* GetT(Node** pointer) {
     assert(pointer  != nullptr);
     assert(*pointer != nullptr);
 
-    Node* retValue = GetP(pointer);
+    Node* retValue = GetDeg(pointer);
 
-    while((((**pointer).data.operation == '*') || ((**pointer).data.operation == '/')) &&
+    while((((**pointer).data.operation == MUL_OP) || ((**pointer).data.operation == DIV_OP)) &&
            ((**pointer).type = TYPE_OP)) {
         Node* operationNode = *pointer;
         (*pointer)++;
 
-        Node* bufValue = GetP(pointer);
+        Node* bufValue = GetDeg(pointer);
 
         operationNode->left  = retValue;
         operationNode->right = bufValue;
 
         retValue = operationNode;
+    }
+
+    return retValue; 
+}
+
+Node* GetDeg(Node** pointer) {
+    assert( pointer != nullptr);
+    assert(*pointer != nullptr);
+
+    Node* retValue = GetP(pointer);
+
+    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == POW_OP)) {
+        Node* remember = retValue;
+
+        retValue = *pointer;
+        (*pointer)++;
+
+        retValue->left  = remember;
+        retValue->right = GetP(pointer);
     }
 
     return retValue;
@@ -298,29 +373,45 @@ Node* GetT(Node** pointer) {
 Node* GetP(Node** pointer) {
     assert(pointer  != nullptr);
     assert(*pointer != nullptr);
-    Node* retValue = 0;
+    Node* retValue = nullptr;
     
-    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == '(')) {
+    Node* bottom = nullptr;
+    while ((**pointer).type == TYPE_OP) {
+        if ((**pointer).data.operation == SUB_OP) {
+            if (bottom == nullptr) {
+                bottom        = MakeNewNode(MUL_OP, 0, TYPE_OP, 0, 0);
+            }
+            else {
+                bottom->right = MakeNewNode(MUL_OP, 0, TYPE_OP, 0, 0);
+                bottom = bottom->right;
+            }
+
+            bottom->left = MakeNewNode(-1, 0, TYPE_CONST, 0, 0);
+        }
+
+        (*pointer)++;
+    }
+
+    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
         (*pointer)++;
 
         retValue = GetE(pointer);
 
-        printf("GetP looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-        Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != ')'));
+        Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
     }
     else if ((**pointer).type == TYPE_VAR) {
         retValue = GetV(pointer);
 
-        if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == '(')) {
+        if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
             (*pointer)++;
             bool firstTimeFlag = 1;
 
             retValue->type = TYPE_FUNC;
             Node* bottomPtr = retValue;
 
-            while (((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != ')')) {
+            while (((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP)) {
                 if (!firstTimeFlag) {
-                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == ',')) {
+                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {
                         bottomPtr->right = *pointer;
                         bottomPtr = *pointer;
 
@@ -332,15 +423,19 @@ Node* GetP(Node** pointer) {
                 firstTimeFlag = 0;
             }
 
-            Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != ')'));
+            Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
         }
     }
     else {
         retValue = GetN(pointer);
     }
 
-    assert(retValue != nullptr);
-    return retValue;
+    if (bottom == nullptr)
+        return retValue;
+    else {
+        bottom->right = retValue;
+        return bottom;
+    }  
 }
 
 Node* GetV(Node** pointer) {
@@ -365,7 +460,16 @@ Node* GetN(Node** pointer) {
     (*pointer)++;
 
     if ((*retValue).type != TYPE_CONST) {
-        fprintf(stderr, "I CAN'T EAT %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+        switch ((**pointer).type) {
+        case TYPE_VAR:
+        case TYPE_FUNC:
+            printf("CAN'T EAT %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+            break;
+        default:
+            printf("CAN'T EAT %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+            break;
+        }
+        
         assert(FAIL && "INVALID RETURN FOR GET N FUNCTION");
     } 
 
@@ -394,7 +498,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
     for (int8_t* curChar = text->buffer; (size_t)(curChar - beginning) < text->bufSize; curChar++) {
         SkipSpaces(&curChar);
         
-        if ((*curChar >= 'A') && (*curChar <= 'z')) {
+        if (((*curChar >= 'A') && (*curChar <= 'Z')) || ((*curChar >= 'a') && (*curChar <= 'z'))) {
             int8_t* bufferRemember = tokens->database + databaseCounter;
             
             while (((*curChar >= 'A') && (*curChar <= 'z')) ||
@@ -410,6 +514,8 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
         
             int8_t keywordNum = 0;
             if ((keywordNum = IsKeyword(bufferRemember, keywords))) {
+                printf("FOUND %d in %s\n", keywordNum, bufferRemember);
+
                 tokens->array[tokensCounter].type            = TYPE_KEYWORD;
                 tokens->array[tokensCounter].data.operation  = keywordNum;
 
@@ -441,29 +547,56 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
         }
         else {
             switch (*curChar) {
-            case '(':
-            case ')':
-            case '[':
-            case ']':
-            case '{':
-            case '}':
-            case '$':
-                tokens->array[tokensCounter].type           = TYPE_UNO;
-                tokens->array[tokensCounter].data.operation = *curChar;
-                break;
-            case ',':
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-            case '^':
-                tokens->array[tokensCounter].type           = TYPE_OP;
-                tokens->array[tokensCounter].data.operation = *curChar;
-                break;
-            default:
-                printf("%c[%d]\n", *curChar,*curChar);
-                assert(FAIL && "Invalid operator");
-                break;
+                case LEFT_ROUND_OP:
+                case RIGHT_ROUND_OP:
+                case LEFT_SQR_OP:
+                case RIGHT_SQR_OP:
+                case LEFT_CUR_OP:
+                case RIGHT_CUR_OP:
+                case EOL_OP:
+                    tokens->array[tokensCounter].type           = TYPE_UNO;
+                    tokens->array[tokensCounter].data.operation = *curChar;
+                    break;
+                case COMMA_OP:
+                case ADD_OP:
+                case SUB_OP:
+                case MUL_OP:
+                case DIV_OP:
+                case POW_OP:
+                    tokens->array[tokensCounter].type           = TYPE_OP;
+                    tokens->array[tokensCounter].data.operation = *curChar;
+                    break;
+                case L_OP:
+                    if (*(curChar + 1) == EQ_OP) {
+                        tokens->array[tokensCounter].data.operation = LEQ_OP;
+                    }
+                    else {
+                        tokens->array[tokensCounter].data.operation = *curChar;
+                    }
+                    tokens->array[tokensCounter].type = TYPE_OP;
+                    break;
+                case G_OP:
+                    if (*(curChar + 1) == EQ_OP) {
+                        tokens->array[tokensCounter].data.operation = GEQ_OP;
+                    }
+                    else {
+                        tokens->array[tokensCounter].data.operation = *curChar;
+                    }
+                    tokens->array[tokensCounter].type = TYPE_OP;
+                    break;
+                case EQ_OP:
+                    if (*(curChar + 1) == EQ_OP) {
+                        tokens->array[tokensCounter].data.operation = DEQ_OP;
+                    }
+                    else {
+                        assert(FAIL && "SINGLE EQ NOT AN OPERATOR");
+                    }
+                    tokens->array[tokensCounter].type = TYPE_OP;
+                    break;
+                default:
+                    printf("%c[%d]\n", *curChar,*curChar);
+                    assert(FAIL && "Invalid operator");
+                    break;
             }
 
             tokensCounter++;
@@ -480,7 +613,7 @@ int8_t IsKeyword(int8_t* buffer, Text* keywords) {
     assert(keywords != nullptr);
 
     for (uint32_t curStr = 0; curStr < keywords->strAmount; curStr++) {
-        if (!MyStrCmp(buffer, keywords->strings[curStr].value)) {
+        if (!strcmp((const char*)buffer, (const char*)keywords->strings[curStr].value)) {
             return (int8_t)(curStr + 1);
         }
     }

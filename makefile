@@ -4,28 +4,28 @@ SrcDir = src
 BinDir = bin
 
 Calc.exe: $(BinDir)/Calc.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o
-	g++ $(BinDir)/Calc.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o -o Calc.exe
+	g++   $(BinDir)/Calc.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o -o Calc.exe
 
 $(BinDir)/Calc.o: $(SrcDir)/Calc.cpp $(SrcDir)/Calc.h $(SrcDir)/Text.h $(SrcDir)/Tree.h $(SrcDir)/Graph.h
-	g++ -c $(SrcDir)/Calc.cpp -o $(BinDir)/Calc.o $(CXXFLAGS)
+	g++ -c 		  $(SrcDir)/Calc.cpp -o $(BinDir)/Calc.o $(CXXFLAGS)
 
 $(BinDir)/Latex.o: $(SrcDir)/Latex.cpp $(SrcDir)/Latex.h
-	g++ -c $(SrcDir)/Latex.cpp -o $(BinDir)/Latex.o $(CXXFLAGS)
+	g++ -c 		   $(SrcDir)/Latex.cpp -o $(BinDir)/Latex.o $(CXXFLAGS)
 
 $(BinDir)/Differ.o: $(SrcDir)/Differ.cpp $(SrcDir)/Differ.h
-	g++ -c $(SrcDir)/Differ.cpp -o $(BinDir)/Differ.o $(CXXFLAGS)
+	g++ -c          $(SrcDir)/Differ.cpp -o $(BinDir)/Differ.o $(CXXFLAGS)
 
 $(BinDir)/Text.o: $(SrcDir)/Text.cpp $(SrcDir)/Text.h
-	g++ -c $(SrcDir)/Text.cpp -o $(BinDir)/Text.o $(CXXFLAGS)
+	g++ -c        $(SrcDir)/Text.cpp -o $(BinDir)/Text.o $(CXXFLAGS)
 
 $(BinDir)/Utilities.o: $(SrcDir)/Utilities.cpp $(SrcDir)/Utilities.h
-	g++ -c $(SrcDir)/Utilities.cpp -o $(BinDir)/Utilities.o $(CXXFLAGS)
+	g++ -c 			   $(SrcDir)/Utilities.cpp -o $(BinDir)/Utilities.o $(CXXFLAGS)
 
 $(BinDir)/Tree.o: $(SrcDir)/Tree.cpp $(SrcDir)/Tree.h
-	g++ -c $(SrcDir)/Tree.cpp -o $(BinDir)/Tree.o $(CXXFLAGS)
+	g++ -c 	      $(SrcDir)/Tree.cpp -o $(BinDir)/Tree.o $(CXXFLAGS)
 
 $(BinDir)/Graph.o: $(SrcDir)/Graph.cpp $(SrcDir)/Graph.h
-	g++ -c $(SrcDir)/Graph.cpp -o $(BinDir)/Graph.o $(CXXFLAGS)
+	g++ -c         $(SrcDir)/Graph.cpp -o $(BinDir)/Graph.o $(CXXFLAGS)
 
 $(BinDir)/Stack.o: $(SrcDir)/Stack.cpp $(SrcDir)/Stack.h
 	g++ -c $(SrcDir)/Stack.cpp -o $(BinDir)/Stack.o $(CXXFLAGS)

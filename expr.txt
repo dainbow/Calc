@@ -1,19 +1,16 @@
+find with a, b begin
+	vasyaSniff a > b begin
+		spit 5$
+	lilEnd
+	someoneSniff begin
+		spit 2$
+	lilEnd
+lilEnd
+
 main begin
 
-hire dolboeb from 2 to 5 with 2 begin
-print(dolboeb) $
-lilEnd
-print(seeex) $
-vasyaSniff koks begin
-print(prohibit) $
-lilEnd
-nextSniff zhopa begin
-print(tasty) $
-lilEnd
-someoneSnif begin
-print(bebra) $
-lilEnd
-print(ochko) $
+a in find(2, 3)$
 
 lilEnd
+
 bigEnd

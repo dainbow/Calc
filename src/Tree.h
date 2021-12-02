@@ -47,6 +47,29 @@ enum KeyWords {
     KEY_ELSE,
     KEY_FOR,
     KEY_FROM,
+    KEY_RETURN,
+};
+
+enum Operators {
+    COMMA_OP = ',',
+    ADD_OP   = '+',
+    SUB_OP   = '-',
+    MUL_OP   = '*',
+    DIV_OP   = '/',
+    POW_OP   = '^',
+    L_OP     = '<',
+    LEQ_OP,
+    G_OP     = '>',
+    GEQ_OP,
+    EQ_OP,
+    DEQ_OP,
+    LEFT_ROUND_OP  = '(',
+    RIGHT_ROUND_OP = ')',
+    LEFT_SQR_OP    = '[',
+    RIGHT_SQR_OP   = ']',
+    LEFT_CUR_OP    = '{',
+    RIGHT_CUR_OP   = '}',
+    EOL_OP         = '$',
 };
 
 union Data {
@@ -81,13 +104,8 @@ const char G_STANDART_NAME[] = "graph";
 const char OPEN_BRACKET  = '(';
 const char CLOSE_BRACKET = ')';
 const int8_t E_CONST[]       = "e";
-const char SUB_OP        = '-';
-const char ADD_OP        = '+';
-const char MUL_OP        = '*';
-const char POW_OP        = '^';
 const char SIN_OP        = 's';
 const char COS_OP        = 'c';
-const char DIV_OP        = '/';
 const char LOG_OP        = 'l';
 
 #define TreeCtor(tree)    \

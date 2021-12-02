@@ -92,7 +92,24 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             strcat(nodeData, "log");
         }
         else {
-            nodeData[0] = root->data.operation;
+            switch (root->data.operation)
+            {
+            case LEQ_OP:
+                sprintf(nodeData, "lesser/eq");
+                break;
+            case L_OP:
+                sprintf(nodeData, "lesser");
+                break;
+            case G_OP:
+                sprintf(nodeData, "greater");
+                break;
+            case GEQ_OP:
+                sprintf(nodeData, "greater/eq");
+                break;
+            default:
+                nodeData[0] = root->data.operation;
+                break;
+            }
         }
         break;
     case TYPE_KEYWORD:
@@ -129,6 +146,9 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
                 break;
             case KEY_FROM:
                 strcat(nodeData, "from");
+                break;
+            case KEY_RETURN:
+                strcat(nodeData, "return");
                 break;
             default:
                 fprintf(stderr, "INVALID KEYWORD %d\n", root->data.operation);
@@ -193,14 +213,14 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             "\t%lld[shape=plaintext, label = <"
             "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING= \"0\" CELLPADDING=\"4\">"
             "<TR>"
-                "<TD COLSPAN=\"2\">" TREE_TYPE "[%u]</TD>"
+                "<TD COLSPAN=\"2\">" TREE_TYPE "</TD>"
             "</TR>"
             "<TR>"
                 "<TD PORT = \"l%d\">" LEFT_BRANCH "</TD>"
                 "<TD PORT = \"r%d\">" RIGHT_BRANCH "</TD>"
             "</TR>"
             "</TABLE>>];\n",
-            root - pointerAnchor, dataConverted, root->weight,
+            root - pointerAnchor, dataConverted,
             curNodeNumber, LEFT_BRANCH_VALUE, 
             curNodeNumber, RIGHT_BRANCH_VALUE);
 
@@ -220,13 +240,13 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             "\t%lld[shape=plaintext, label = <"
             "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING= \"0\" CELLPADDING=\"4\">"
             "<TR>"
-                "<TD COLSPAN=\"2\">" TREE_TYPE "[%u]</TD>"
+                "<TD COLSPAN=\"2\">" TREE_TYPE "</TD>"
             "</TR>"
             "<TR>"
                 "<TD PORT = \"r%d\">" RIGHT_BRANCH "</TD>"
             "</TR>"
             "</TABLE>>];\n",
-            root - pointerAnchor, dataConverted, root->weight,
+            root - pointerAnchor, dataConverted,
             curNodeNumber, RIGHT_BRANCH_VALUE);
 
         curRecursionDepth += 1;
@@ -242,13 +262,13 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             "\t%lld[shape=plaintext, label = <"
             "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING= \"0\" CELLPADDING=\"4\">"
             "<TR>"
-                "<TD COLSPAN=\"2\">" TREE_TYPE "[%u]</TD>"
+                "<TD COLSPAN=\"2\">" TREE_TYPE "</TD>"
             "</TR>"
             "<TR>"
                 "<TD PORT = \"l%d\">" LEFT_BRANCH "</TD>"
             "</TR>"
             "</TABLE>>];\n",
-            root - pointerAnchor, dataConverted, root->weight,
+            root - pointerAnchor, dataConverted,
             curNodeNumber, LEFT_BRANCH_VALUE);
 
         curRecursionDepth += 1;
