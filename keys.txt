@@ -1,6 +1,12 @@
-if
-else
-while
+vasyaSniff
+nextSniff
+homyak
 in 
 to
-end
+bigEnd
+lilEnd
+with
+begin
+someoneSniff
+hire
+from

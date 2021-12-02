@@ -112,6 +112,24 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             case KEY_WHILE:
                 strcat(nodeData, "while");
                 break;
+            case KEY_LILEND:
+                strcat(nodeData, "lilEnd");
+                break;
+            case KEY_WITH:
+                strcat(nodeData, "with");
+                break;
+            case KEY_BEGIN:
+                strcat(nodeData, "begin");
+                break;
+            case KEY_ELSEIF:
+                strcat(nodeData, "elseif");
+                break;
+            case KEY_FOR:
+                strcat(nodeData, "for");
+                break;
+            case KEY_FROM:
+                strcat(nodeData, "from");
+                break;
             default:
                 fprintf(stderr, "INVALID KEYWORD %d\n", root->data.operation);
                 abort();

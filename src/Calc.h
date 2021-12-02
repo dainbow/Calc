@@ -39,6 +39,8 @@ Node* GetP(Node** pointer);
 Node* GetN(Node** pointer);
 Node* GetV(Node** pointer);
 Node* GetS(Node** pointer);
+Node* GetF(Node** pointer);
+Node* GetK(Node** pointer);
 
 void SkipSpaces(int8_t** pointer);
 

@@ -1,6 +1,19 @@
-qa in 0 $
-qb in 2 $
-qc in 3 $
-xa in SolveQuadro(qa) $
+main begin
 
-end
+hire dolboeb from 2 to 5 with 2 begin
+print(dolboeb) $
+lilEnd
+print(seeex) $
+vasyaSniff koks begin
+print(prohibit) $
+lilEnd
+nextSniff zhopa begin
+print(tasty) $
+lilEnd
+someoneSnif begin
+print(bebra) $
+lilEnd
+print(ochko) $
+
+lilEnd
+bigEnd

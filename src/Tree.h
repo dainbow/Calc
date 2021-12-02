@@ -35,12 +35,18 @@ enum NodeDataTypes {
 };
 
 enum KeyWords {
-    KEY_IF    = 0,
-    KEY_ELSE  = 1,
-    KEY_WHILE = 2,
-    KEY_IN = 4,
-    KEY_TO = 5,
+    KEY_IF = 1,
+    KEY_ELSEIF,
+    KEY_WHILE,
+    KEY_IN,
+    KEY_TO,
     KEY_END,
+    KEY_LILEND,
+    KEY_WITH,
+    KEY_BEGIN,
+    KEY_ELSE,
+    KEY_FOR,
+    KEY_FROM,
 };
 
 union Data {

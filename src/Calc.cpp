@@ -1,13 +1,15 @@
-/*  G::= S'$'
+/*  G::= F
+    F::= V {with} {V,}* begin {K | S}* 'lilEnd'
+    K::= VasyaSniff | NextSniff | Homyak | Hire 
+    S::= (V 'in' E) | (E 'to' V) | E '$'
     E::= T{[+-]T} *
     T::= P{[*\]P} *
-    P::= '('E')' | V '('E')' | V  | N
-    S::=  (V 'in' E) | (E 'to' V) | E  
+    P::= '('E')' | V '('E {,E}*')' | V  | N
     V::= TYPE_VAR
     N::= TYPE_CONST
 */
 
-#include "calc.h"
+#include "Calc.h"
 
 int main() {
     Text expression = {};
@@ -35,16 +37,6 @@ int main() {
     Node* bottom = AST.root;
 
     while((tokens.array->type != TYPE_KEYWORD) || (tokens.array->data.operation != KEY_END)) {
-        printf("WE'RE ON ");
-        if (tokens.array->type == TYPE_VAR)
-            printf("'%s'[VAR], \n", tokens.array->data.expression);
-        else if (tokens.array->type == TYPE_CONST)
-            printf("'%d'[CONST], \n", tokens.array->data.number);
-        else if ((tokens.array->type == TYPE_OP) || (tokens.array->type == TYPE_UNO))
-            printf("'%c{%d}'[OP], \n", tokens.array->data.operation, tokens.array->data.number);
-        else if (tokens.array->type == TYPE_KEYWORD)
-            printf("'%c{%d}'[KEY], \n", tokens.array->data.operation, tokens.array->data.number);
-
         bottom->right = GetG(&tokens.array);
         bottom = bottom->right;
     }
@@ -58,19 +50,161 @@ Node* GetG(Node** pointer) {
     assert(pointer  != nullptr);
     assert(*pointer != nullptr);
 
-    Node* retValue = GetS(pointer);
+    Node* retValue = GetF(pointer);
     
     printf("type is %d; operation is %c\n", (**pointer).type, (**pointer).data.operation);
     
-    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == '$')) {
+    if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_LILEND)) {
         (*pointer)->left = retValue;
         retValue = *pointer;
 
         (*pointer)++;
     }
     else {
-        assert("SYNTAX ERROR, EOL NOT FOUND");
+        assert("SYNTAX ERROR, EOF NOT FOUND");
     }
+
+    return retValue;
+}
+
+Node* GetF(Node** pointer) {
+    assert( pointer != nullptr);
+    assert(*pointer != nullptr);
+
+    Node* retValue = 0;
+
+    if ((**pointer).type == TYPE_VAR) {
+        retValue = GetV(pointer);
+
+        if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_WITH)) {
+            retValue->left = *pointer;
+            (*pointer)++;
+
+            bool firstTimeFlag = 1;
+
+            retValue->type = TYPE_FUNC;
+            Node* bottomPtr = retValue->left;
+
+            while (((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN)) {
+                if (!firstTimeFlag) {
+                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == ',')) {
+                        bottomPtr->right = *pointer;
+                        bottomPtr = *pointer;
+
+                        (*pointer)++;
+                    }
+                }
+
+                bottomPtr->left = GetV(pointer);
+                firstTimeFlag = 0;
+            }
+        }
+        Require(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN));
+
+        retValue->right = ((**pointer).type == TYPE_KEYWORD) ? GetK(pointer) : GetS(pointer);
+        Node* bottom = retValue->right;
+
+        while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+            bottom->right = ((**pointer).type == TYPE_KEYWORD) ? GetK(pointer) : GetS(pointer);
+            bottom = bottom->right;
+        }
+    }
+
+    return retValue;
+}
+
+Node* GetK(Node** pointer) {
+    assert( pointer != nullptr);
+    assert(*pointer != nullptr);
+
+    Node* retValue = *pointer;
+
+    switch ((**pointer).data.operation) {
+        case KEY_WHILE:
+        case KEY_IF:
+            (*pointer)++;
+            retValue->left  = GetE(pointer);
+            break;
+        case KEY_FOR: {
+            (*pointer)++;
+            Node* whoNode = GetV(pointer);
+            
+            if (((**pointer).data.operation == KEY_FROM) && ((**pointer).type == TYPE_KEYWORD)) {
+                retValue->left = (*pointer)++;
+                retValue->left->left = whoNode;
+                
+                Node* fromNode = GetE(pointer);
+                if (((**pointer).data.operation == KEY_TO) && ((**pointer).type == TYPE_KEYWORD)) {
+                    retValue->left->right = (*pointer)++;
+                    retValue->left->right->left = fromNode;
+
+                    Node* toNode = GetE(pointer);
+                    
+                    if (((**pointer).data.operation == KEY_WITH) && ((**pointer).type == TYPE_KEYWORD)) {
+                        retValue->left->right->right = (*pointer)++;
+
+                        retValue->left->right->right->left  = toNode;
+                        retValue->left->right->right->right = GetE(pointer);
+                    }
+                    else {
+                        retValue->left->right->right = toNode;
+                    }
+                }
+                else {
+                    assert(FAIL && "CAN'T FIND \"TO\" AFTER EXPRESSION");
+                }
+            }
+            else {
+                assert(FAIL && "CAN'T FIND \"FROM\" AFTER HIRE");
+            }
+            break;
+        }
+        default:
+            assert(FAIL && "INVALID KEYWORD FOR BEING FIRST IN LINE");
+            break;
+    }
+
+    if ((**pointer).data.operation == KEY_BEGIN) {
+        retValue->right = (*pointer)++; 
+        retValue->right->left = GetS(pointer);
+        Node* bottom = retValue->right->left;
+
+        while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+            bottom->right = GetS(pointer);
+            bottom = bottom->right;
+        }
+        (*pointer)++;
+    }
+    else {
+        assert(FAIL && "BEGIN AFTER KEYWORD EXPRESSION NOT FOUND");
+    }
+
+    if ((retValue->data.operation   == KEY_IF) &&
+        ((**pointer).type           == TYPE_KEYWORD)   && 
+        ((**pointer).data.operation == KEY_ELSEIF)) {
+
+        (**pointer).data.operation  = KEY_IF;
+        retValue->right->right      = GetK(pointer);
+    }
+    else if (((retValue->data.operation   == KEY_IF)    || 
+              (retValue->data.operation   == KEY_WHILE)) &&
+            ((**pointer).type == TYPE_KEYWORD)          && 
+            ((**pointer).data.operation == KEY_ELSE)) {
+
+        (*pointer)++;
+        (*pointer)++;
+    
+        retValue->right->right = GetS(pointer);
+        Node* bottom = retValue->right->right;
+
+        while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+            bottom->right = GetS(pointer);
+            bottom = bottom->right;
+        }
+        (*pointer)++;
+    }
+    Node* connector = MakeNewNode('$', 0, TYPE_UNO, retValue, 0);
+    retValue = connector;
 
     return retValue;
 }
@@ -102,6 +236,16 @@ Node* GetS(Node** pointer) {
         else {
             retValue = expression;
         }
+    }
+    
+    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == '$')) {
+        (*pointer)->left = retValue;
+        retValue = *pointer;
+
+        (*pointer)++;
+    }
+    else {
+        assert(FAIL && "SYNTAX ERROR, EOL NOT FOUND");
     }
 
     return retValue;
@@ -169,10 +313,25 @@ Node* GetP(Node** pointer) {
 
         if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == '(')) {
             (*pointer)++;
-            retValue->type = TYPE_FUNC;
+            bool firstTimeFlag = 1;
 
-            if (((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != ')'))
-                retValue->right = GetE(pointer);
+            retValue->type = TYPE_FUNC;
+            Node* bottomPtr = retValue;
+
+            while (((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != ')')) {
+                if (!firstTimeFlag) {
+                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == ',')) {
+                        bottomPtr->right = *pointer;
+                        bottomPtr = *pointer;
+
+                        (*pointer)++;
+                    }
+                }
+
+                bottomPtr->left = GetE(pointer);
+                firstTimeFlag = 0;
+            }
+
             Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != ')'));
         }
     }
@@ -206,6 +365,7 @@ Node* GetN(Node** pointer) {
     (*pointer)++;
 
     if ((*retValue).type != TYPE_CONST) {
+        fprintf(stderr, "I CAN'T EAT %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
         assert(FAIL && "INVALID RETURN FOR GET N FUNCTION");
     } 
 
@@ -291,6 +451,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 tokens->array[tokensCounter].type           = TYPE_UNO;
                 tokens->array[tokensCounter].data.operation = *curChar;
                 break;
+            case ',':
             case '+':
             case '-':
             case '*':
