@@ -1,4 +1,6 @@
-graphs
+*.dmp
+*.log
+*.png
 
 # Prerequisites
 *.d

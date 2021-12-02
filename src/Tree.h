@@ -30,12 +30,23 @@ enum NodeDataTypes {
     TYPE_OP      = 2,
     TYPE_VAR     = 3,
     TYPE_UNO     = 4,
+    TYPE_KEYWORD = 5,
+    TYPE_FUNC    = 6,
+};
+
+enum KeyWords {
+    KEY_IF    = 0,
+    KEY_ELSE  = 1,
+    KEY_WHILE = 2,
+    KEY_IN = 4,
+    KEY_TO = 5,
+    KEY_END,
 };
 
 union Data {
-    int8_t* expression;
-    int8_t  operation;
     int32_t number;
+    int8_t  operation;
+    int8_t* expression;
 };
 
 struct Node {

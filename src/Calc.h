@@ -1,5 +1,7 @@
 #pragma once
 
+#include "TXLib.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +35,10 @@ Node* GetG(Node** pointer);
 Node* GetE(Node** pointer);
 Node* GetT(Node** pointer);
 Node* GetP(Node** pointer);
+
 Node* GetN(Node** pointer);
+Node* GetV(Node** pointer);
+Node* GetS(Node** pointer);
 
 void SkipSpaces(int8_t** pointer);
 

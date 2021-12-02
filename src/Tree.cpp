@@ -95,6 +95,33 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             nodeData[0] = root->data.operation;
         }
         break;
+    case TYPE_KEYWORD:
+        switch(root->data.operation) {
+            case KEY_IN:
+                strcat(nodeData, "in");
+                break;
+            case KEY_TO:
+                strcat(nodeData, "to");
+                break;
+            case KEY_ELSE:
+                strcat(nodeData, "else");
+                break;
+            case KEY_IF:
+                strcat(nodeData, "if");
+                break;
+            case KEY_WHILE:
+                strcat(nodeData, "while");
+                break;
+            default:
+                fprintf(stderr, "INVALID KEYWORD %d\n", root->data.operation);
+                abort();
+                break; 
+        }
+        break;
+    case TYPE_FUNC:
+        strcat(nodeData, (const char*)root->data.expression);
+        strcat(nodeData, "()");
+        break;
     case TYPE_VAR:
         strcat(nodeData, (const char*)root->data.expression);
         break;
@@ -105,6 +132,9 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
                 break;
             case (int32_t)'c':
                 strcat(nodeData, "cos");
+                break;
+            case '$':
+                strcat(nodeData, "$$$");
                 break;
             default:
                 assert(FAIL && "UNKNOWN UNO OPERAND");
@@ -187,6 +217,28 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
                 root - pointerAnchor, curNodeNumber, root->right - pointerAnchor);
 
         PrintTreeNodes(tree, root->right, output);
+        curRecursionDepth--;
+    }
+    else if ((root->left != nullptr) && (root->right == nullptr)) {
+        fprintf(output, 
+            "\t%lld[shape=plaintext, label = <"
+            "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING= \"0\" CELLPADDING=\"4\">"
+            "<TR>"
+                "<TD COLSPAN=\"2\">" TREE_TYPE "[%u]</TD>"
+            "</TR>"
+            "<TR>"
+                "<TD PORT = \"l%d\">" LEFT_BRANCH "</TD>"
+            "</TR>"
+            "</TABLE>>];\n",
+            root - pointerAnchor, dataConverted, root->weight,
+            curNodeNumber, LEFT_BRANCH_VALUE);
+
+        curRecursionDepth += 1;
+
+        fprintf(output, "\t\t%lld: <l%d> -> %lld;\n", 
+                root - pointerAnchor, curNodeNumber, root->left - pointerAnchor);
+
+        PrintTreeNodes(tree, root->left, output);
         curRecursionDepth--;
     }
     else {

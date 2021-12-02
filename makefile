@@ -6,7 +6,7 @@ BinDir = bin
 Calc.exe: $(BinDir)/Calc.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o
 	g++ $(BinDir)/Calc.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o -o Calc.exe
 
-$(BinDir)/Calc.o: $(SrcDir)/Calc.cpp $(SrcDir)/Calc.h
+$(BinDir)/Calc.o: $(SrcDir)/Calc.cpp $(SrcDir)/Calc.h $(SrcDir)/Text.h $(SrcDir)/Tree.h $(SrcDir)/Graph.h
 	g++ -c $(SrcDir)/Calc.cpp -o $(BinDir)/Calc.o $(CXXFLAGS)
 
 $(BinDir)/Latex.o: $(SrcDir)/Latex.cpp $(SrcDir)/Latex.h

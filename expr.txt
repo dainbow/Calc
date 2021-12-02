@@ -1,4 +1,6 @@
-if((1 + 3) * (2 - 6))$
+qa in 0 $
+qb in 2 $
+qc in 3 $
+xa in SolveQuadro(qa) $
 
-
-
+end
