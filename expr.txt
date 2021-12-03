@@ -1,9 +1,9 @@
 find with a, b begin
 	vasyaSniff a > b begin
-		spit 5$
+		spit find(a, b)$
 	lilEnd
 	someoneSniff begin
-		spit 2$
+		spit find(b, a)$
 	lilEnd
 lilEnd
 
