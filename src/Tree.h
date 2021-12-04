@@ -61,7 +61,7 @@ enum Operators {
     LEQ_OP,
     G_OP     = '>',
     GEQ_OP,
-    EQ_OP,
+    EQ_OP    = '=',
     DEQ_OP,
     LEFT_ROUND_OP  = '(',
     RIGHT_ROUND_OP = ')',

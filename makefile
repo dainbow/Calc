@@ -6,7 +6,7 @@ BinDir = bin
 Calc.exe: $(BinDir)/Calc.o $(BinDir)/Codegen.o $(BinDir)/Grammar.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o
 	g++   $(BinDir)/Calc.o $(BinDir)/Codegen.o $(BinDir)/Grammar.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Stack.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Differ.o $(BinDir)/Latex.o -o Calc.exe
 
-$(BinDir)/Codegen.o: $(SrcDir)/Codegen.cpp    $(SrcDir)/Grammar.h $(SrcDir)/Text.h $(SrcDir)/Tree.h $(SrcDir)/Graph.h
+$(BinDir)/Codegen.o: $(SrcDir)/Codegen.cpp  $(SrcDir)/Codegen.h $(SrcDir)/Grammar.h $(SrcDir)/Text.h $(SrcDir)/Tree.h $(SrcDir)/Graph.h
 	g++ -c 		     $(SrcDir)/Codegen.cpp -o $(BinDir)/Codegen.o $(CXXFLAGS)
 
 $(BinDir)/Grammar.o: $(SrcDir)/Grammar.cpp $(SrcDir)/Grammar.h $(SrcDir)/Text.h $(SrcDir)/Tree.h $(SrcDir)/Graph.h

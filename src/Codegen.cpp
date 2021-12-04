@@ -2,15 +2,19 @@
 
 void GenerateCode(Tree* AST) {
     assert(AST != nullptr);
+
+    StackCtor(offsetStack);
     char* endName = 0;
 
     GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
-
     FILE* output = fopen(endName, "w");
 
-    CodegenContext context = {};
-    ASTBypass(AST->root, output, &context);
+    CodegenContext* context = (CodegenContext*)calloc(1, sizeof(context[0]));
+    context->offsetStack    = &offsetStack; 
 
+    ASTBypass(AST->root, output, context);
+
+    StackDtor(&offsetStack);
     fclose(output);
 }
 
@@ -19,7 +23,97 @@ void ASTBypass(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
+    SkipStrConk(AST, output, context);
+
     ProcessFunction(AST, output, context);
+    ProcessKeyword(AST, output, context);
+}
+
+void ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    if (AST->type == TYPE_KEYWORD) {
+        switch (AST->data.operation) {
+            case KEY_IF:
+                ProcessIf(AST, output, context);
+                break;
+            case KEY_FOR:
+                ProcessFor(AST, output, context);
+                break;
+            /*case KEY_WHILE:
+                ProcessWhile(AST, output, context);
+                break;
+            case KEY_RETURN:
+                ProcessReturn(AST, output, context);
+                break;*/
+            case KEY_IN:
+                ProcessIn(AST, output, context);
+                break;
+            case KEY_TO:
+                ProcessTo(AST, output, context);
+                break;
+            default:
+                fprintf(stderr, "UNKNOWN KEYWORD %d\n", AST->data.operation);
+                abort();
+                break;
+        }
+    }
+}
+
+void ProcessReturn(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    PushNode(AST->right, output, context);
+    fprintf(output, "ret\n");
+}
+
+void ProcessTo(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    uint32_t varOffset = MakeLocalVar(AST->right->data.expression, context);
+    PushNode(AST->left, output, context);
+
+    fprintf(output, "pop {bx + %u}\n", varOffset);
+}
+
+void ProcessIn(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    uint32_t varOffset = MakeLocalVar(AST->left->data.expression, context);
+    PushNode(AST->right, output, context);
+
+    fprintf(output, "pop {bx + %u}\n", varOffset);
+}
+
+void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+    StackPush(context->offsetStack, context->offset);
+
+    PushNode(AST->left, output, context);
+    
+    fprintf(output, "push 0\n");
+    fprintf(output, "je ifend%u\n", context->ifAmount);
+
+    ASTBypass(AST->right->left, output, context);
+
+    fprintf(output, "ifend%u:\n", context->ifAmount);
+    context->ifAmount++;
+
+    if (AST->right->right != nullptr) {
+        ASTBypass(AST->right->right, output, context);
+    }
+
+    context->offset = StackPop(context->offsetStack);
 }
 
 void ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
@@ -29,6 +123,8 @@ void ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
 
     if (AST->type == TYPE_FUNC) {
         if (!context->ifInFunction) {
+            StackPush(context->offsetStack, context->offset);
+
             fprintf(output, "%s:", AST->data.expression);
 
             int32_t paramAmount = 0;
@@ -39,6 +135,8 @@ void ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
             MakeFunc(AST->data.expression, context, paramAmount);
             context->ifInFunction = 1;
             ASTBypass(AST->right, output, context);
+
+            context->offset = StackPop(context->offsetStack);
         }
         else {
             if ((AST->right != nullptr)        &&
@@ -73,7 +171,9 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
             assert(0 && "INVALID AMOUNT OF ARGUMENTS");
         }
 
+        EnterFuncVisibilityZone(AST, output, context);
         fprintf(output, "call %s\n", AST->data.expression);
+        ExitFuncVisibilityZone(AST, output, context);
     }
 
     return paramAmount;
@@ -93,7 +193,7 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
     }
 
     if (AST->type == TYPE_CONST) {
-        fprintf(output, "push %f\n");
+        fprintf(output, "push %f\n", AST->data.number);
     }
 
     if (AST->type == TYPE_VAR) {
@@ -128,7 +228,7 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         fprintf(output, "pop cx\n");
 
         fprintf(output, "push cx\n");
-        fprintf(output, "pow%d:\n", context->powerAmount);
+        fprintf(output, "pow%u:\n", context->powerAmount);
         
         fprintf(output, "push ax\n");
         fprintf(output, "push 1\n");
@@ -140,19 +240,19 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
 
         fprintf(output, "push ax\n");
         fprintf(output, "push 1\n");
-        fprintf(output, "ja pow%d\n", context->powerAmount);
+        fprintf(output, "ja pow%u\n", context->powerAmount);
 
         context->powerAmount++;
         break;
     case L_OP:
         fprintf(output, "sub\n");
 
-        fprintf(output, "jb compareg%d\n", context->compareAmount);
+        fprintf(output, "jb compareg%u\n", context->compareAmount);
         
         fprintf(output, "pop\n");
         fprintf(output, "push 0\n");
 
-        fprintf(output, "compareg%d:\n", context->compareAmount);
+        fprintf(output, "compareg%u:\n", context->compareAmount);
 
         context->compareAmount++;
         break;
@@ -162,24 +262,24 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
 
         fprintf(output, "sub\n");
 
-        fprintf(output, "jb compareg%d\n", context->compareAmount);
+        fprintf(output, "jb compareg%u\n", context->compareAmount);
         
         fprintf(output, "pop");
         fprintf(output, "push 0");
 
-        fprintf(output, "compareg%d:", context->compareAmount);
+        fprintf(output, "compareg%u:", context->compareAmount);
 
         context->compareAmount++;
         break;
     case G_OP:
         fprintf(output, "sub\n");
 
-        fprintf(output, "ja compareg%d\n", context->compareAmount);
+        fprintf(output, "ja compareg%u\n", context->compareAmount);
         
         fprintf(output, "pop");
         fprintf(output, "push 0");
 
-        fprintf(output, "compareg%d:", context->compareAmount);
+        fprintf(output, "compareg%u:", context->compareAmount);
 
         context->compareAmount++;
         break;
@@ -189,12 +289,12 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
 
         fprintf(output, "sub\n");
 
-        fprintf(output, "ja compareg%d\n", context->compareAmount);
+        fprintf(output, "ja compareg%u\n", context->compareAmount);
         
         fprintf(output, "pop");
         fprintf(output, "push 0");
 
-        fprintf(output, "compareg%d:", context->compareAmount);
+        fprintf(output, "compareg%u:", context->compareAmount);
 
         context->compareAmount++;
         break;
@@ -264,13 +364,22 @@ void MakeFunc(int8_t* name, CodegenContext* context, int32_t argAmount) {
     context->functionsAmount++;
 }
 
-void MakeLocalVar(int8_t* name, CodegenContext* context) {
+uint32_t MakeLocalVar(int8_t* name, CodegenContext* context) {
     assert(name    != nullptr);
     assert(context != nullptr);
-    CheckVarRepetitions(name, context);
+    int32_t repState = GetVarOffset(name, context);
 
-    context->variables[context->offset] = {name, context->offset};
-    context->offset++; 
+    if (repState == -1) {
+        context->variables[context->offset].name = name; 
+        context->variables[context->offset].offset[context->recursionDepth] = context->offset;
+
+        context->offset++;
+
+        return (context->offset - 1); 
+    }
+    else {
+        return (uint32_t)repState;
+    }
 }
 
 void CheckFuncRepetitions(int8_t* name, CodegenContext* context) {
@@ -284,13 +393,43 @@ void CheckFuncRepetitions(int8_t* name, CodegenContext* context) {
     }
 }
 
-void CheckVarRepetitions(int8_t* name, CodegenContext* context) {
-    assert(name    != nullptr);
+void SkipStrConk(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
     assert(context != nullptr);
 
-    for (uint32_t curVar = 0; curVar < context->offset; curVar++) {
-        if (!strcmp((const char*)context->variables[curVar].name, (const char*)name)) {
-            assert(0 && "TWO VARS WITH EQUAL NAMES");
+    if ((AST->type == TYPE_OP) &&
+        (AST->data.operation == '$')) {
+        if (AST->left != nullptr) {
+            ASTBypass(AST->left, output, context);
+        }
+
+        if (AST->right != nullptr) {
+            ASTBypass(AST->right, output, context);
         }
     }
+}
+
+void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    StackPush(context->offsetStack, context->offset);
+
+    fprintf(output, "push %u\n", context->offset);
+    fprintf(output, "push bx\n");
+    fprintf(output, "add");
+    fprintf(output, "pop bx");
+}
+
+void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    context->offset = (!context->offsetStack->size) ? 0 : StackPop(context->offsetStack);
+
+    fprintf(output, "push %u\n", context->offset);
+    fprintf(output, "pop bx");
 }

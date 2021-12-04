@@ -1,15 +1,12 @@
-find with a, b begin
-	vasyaSniff a > b begin
-		spit find(a, b)$
-	lilEnd
-	someoneSniff begin
-		spit find(b, a)$
-	lilEnd
-lilEnd
-
 main begin
 
-a in find(2, 3)$
+sum in 0 $
+
+hire dolboeb from 2 to 5 begin
+	sum in sum + dolboeb $
+lilEnd	
+
+a in fact(7)$
 
 lilEnd
 

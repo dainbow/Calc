@@ -541,6 +541,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 case L_OP:
                     if (*(curChar + 1) == EQ_OP) {
                         tokens->array[tokensCounter].data.operation = LEQ_OP;
+                        curChar++;
                     }
                     else {
                         tokens->array[tokensCounter].data.operation = *curChar;
@@ -550,6 +551,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 case G_OP:
                     if (*(curChar + 1) == EQ_OP) {
                         tokens->array[tokensCounter].data.operation = GEQ_OP;
+                        curChar++;
                     }
                     else {
                         tokens->array[tokensCounter].data.operation = *curChar;
@@ -559,6 +561,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 case EQ_OP:
                     if (*(curChar + 1) == EQ_OP) {
                         tokens->array[tokensCounter].data.operation = DEQ_OP;
+                        curChar++;
                     }
                     else {
                         assert(FAIL && "SINGLE EQ NOT AN OPERATOR");
