@@ -241,7 +241,7 @@ int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
 #define R root->right
 #define L root->left
 
-#define D(smth) Differentiate(smth, output, diffContext, logFlag)
+#define D(smth) Differentiate(smth)
 #define C(smth) Copy(smth)
 #define F(smth) MakeFactor(smth)
 
@@ -258,10 +258,8 @@ int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
 #define CONST_NODE(smth)   MakeNewNode(smth, 0, TYPE_CONST, nullptr, nullptr)
 #define VAR_NODE(smth)     MakeNewNode(0, smth, TYPE_VAR, nullptr, nullptr)     
 
-Node* Differentiate (Node* root, FILE* output, DiffContext* diffContext, bool logFlag) {
+Node* Differentiate (Node* root) {
     assert(root        != nullptr);
-    assert(output      != nullptr);
-    assert(diffContext != nullptr);
 
     Node* returningRoot = nullptr;
 
@@ -331,10 +329,6 @@ Node* Differentiate (Node* root, FILE* output, DiffContext* diffContext, bool lo
     case TYPE_UNKNOWN:
     default:
         assert(FAIL && "UNKNOWN DATA TYPE");
-    }
-
-    if (logFlag) {
-        LogDiffProcessToTex(N, returningRoot, output, diffContext);
     }
 
     return returningRoot;
@@ -467,7 +461,7 @@ int32_t FoldConst(Node* node) {
 
 #define CUT_EQUAL_NODES(direction1, direction2, value)                          \
     if ((context.node-> direction1 ->type == TYPE_CONST) &&                     \
-        (context.node-> direction1 ->data.number == value)) {                          \
+        (context.node-> direction1 ->data.number == value)) {                    \
         if (*context.prevNode == context.node) {                                \
             Node* saveNode = *context.prevNode;                                 \
             *context.prevNode = context.node-> direction2;                      \
@@ -504,6 +498,7 @@ int32_t CutEqualNodes(Context context) {
         CUT_EQUAL_NODES(right, left, 0)
     }
     else if (context.node->data.operation == (int32_t)MUL_OP) {
+        printf("FOLDING MUL\n");
         CUT_EQUAL_NODES(left, right, 1)
         CUT_EQUAL_NODES(right, left, 1)
     }
@@ -653,20 +648,20 @@ int32_t CheckForVars(Node* node) {
     return returnValue;
 }
 
-void OptimisationAfterDiff(Tree* tree) {
-    assert(tree != nullptr);
+Node* OptimisationAfterDiff(Node* node) {
+    assert(node != nullptr);
 
     int32_t optimisationCounter = 0;
     do {
         optimisationCounter  = 0;
 
-        optimisationCounter += FoldConst(tree->root);
-        optimisationCounter += CutEqualNodes({tree->root, &tree->root});
-        optimisationCounter += CutNullNodes({tree->root, &tree->root});
-        optimisationCounter += CutMinusOneNodes(tree->root);
-
-        //MakeTreeGraph(tree, G_STANDART_NAME);
+        optimisationCounter += FoldConst(node);
+        optimisationCounter += CutEqualNodes({node, &node});
+        optimisationCounter += CutNullNodes({node, &node});
+        optimisationCounter += CutMinusOneNodes(node);
     } while (optimisationCounter);
+
+    return node;
 }
 
 FILE* StartTex(Tree* tree, char** outputName, DiffContext* diffContext) {
@@ -681,121 +676,4 @@ FILE* StartTex(Tree* tree, char** outputName, DiffContext* diffContext) {
     PrintBigNodes(output, diffContext);
 
     return output;
-}
-
-void LogDiffProcessToTex(Node* curNode, Node* diffNode, FILE* output, DiffContext* diffContext) {
-    assert(curNode     != nullptr);
-    assert(diffNode    != nullptr);
-    assert(output      != nullptr);
-    assert(diffContext != nullptr);
-
-    fprintf(output, "%s\n\n", diffContext->mathPhrases->strings
-                              [rand() % diffContext->mathPhrases->strAmount].value);
-    fprintf(output, "$(");
-        PrintTexTree(1, curNode, output, diffContext);
-    fprintf(output, ")'$ = $");
-        PrintTexTree(1, diffNode, output, diffContext);
-    fprintf(output, "$\n\n");
-        PrintBigNodes(output, diffContext);
-}
-
-void StopTex(FILE* output, char* outputName, Node* beginNode, Node* node, DiffContext* diffContext) {
-    assert(output != nullptr);
-    assert(node   != nullptr);
-
-    fprintf(output, "После некоторых наипростейших упрощений, я получил ответ:\n\n");
-    
-    fprintf(output, "$");
-        PrintTexTree(1, node, output, diffContext);
-    fprintf(output, "$\n\n");
-        PrintBigNodes(output, diffContext);
-    
-    #if(MAKLOREN)
-        fprintf(output, "А также, хотелось бы дать читателю занимательное упражнение: разложить данное выражение в ряд Маклорена, "
-                    "а когда вы вернётесь, то можете сверить ответ\n\n");
-
-        MakeMakloren(output, beginNode, 5, 'x', diffContext);
-    #endif
-    
-    fprintf(output, "\\end{document}\n");
-    fclose(output);
-
-    char pdflatex[MAX_COMMAND_NAME] = "";
-    char del[MAX_COMMAND_NAME]      = "";
-    char delLog[MAX_COMMAND_NAME]   = "";
-    char delAux[MAX_COMMAND_NAME]   = "";
-    char start[MAX_COMMAND_NAME]    = "";
-
-    sprintf(pdflatex, "pdflatex %s -output-directory=%s", outputName, TEX_PATH);
-    
-    sprintf(del,    "del \"%s\"", outputName);
-    sprintf(delLog, "del \"%s%s\"", outputName, LOG_FORMAT);
-    sprintf(delAux, "del \"%s%s\"", outputName, AUX_FORMAT);
-
-    sprintf(start, "start %s%s", outputName, TEX_OUTPUT_FORMAT);
-
-    system(pdflatex);
-
-    system(del);
-    system(delLog);
-    system(delAux);
-    
-    system(start);
-}
-
-void SubstituteVars(Node* node, int8_t* varData, int32_t value) {
-    assert(node != 0);
-
-    if (node->left != nullptr) {
-        SubstituteVars(node->left, varData, value);
-    }
-
-    if ((node->type == TYPE_VAR) &&
-        (strcmp((const char*)node->data.expression, (const char*)varData))) {
-        node->data.number = value;
-        node->type = TYPE_CONST;
-    }
-
-    if (node->right != nullptr) {
-        SubstituteVars(node->right, varData, value);
-    }
-}
-
-void MakeMakloren(FILE* output, Node* node, int32_t accuracy, int8_t* variable, DiffContext* diffContext) {
-    assert(output != nullptr);
-    assert(node   != nullptr);
-    TreeCtor(maklorenTree);
-    TreeCtor(maklorenSubTree);
-
-    maklorenTree.root    = node;
-    maklorenSubTree.root = node;
-    Node* finalNode      = nullptr;
-
-    fprintf(output, "f(%c) = $", variable);
-    for (int32_t curSum = 0; curSum <= accuracy; curSum++) {
-        if (curSum > 0) {
-            maklorenTree.root    = Differentiate(maklorenTree.root, output, diffContext, 0);
-            OptimisationAfterDiff(&maklorenTree);
-        }
-
-        maklorenSubTree.root = Copy(maklorenTree.root);
-        SubstituteVars(maklorenSubTree.root, variable, 0);
-        OptimisationAfterDiff(&maklorenSubTree);
-
-        maklorenSubTree.root = MUL(DIV(maklorenSubTree.root, F(curSum)), POW(VAR_NODE(variable), CONST_NODE(curSum)));
-
-        if (finalNode == nullptr)
-            finalNode = maklorenSubTree.root;
-        else
-            finalNode = ADD(finalNode, maklorenSubTree.root);
-    }
-
-    maklorenSubTree.root = finalNode;
-    MakeTreeGraph(&maklorenSubTree, G_STANDART_NAME);
-    OptimisationAfterDiff(&maklorenSubTree);
-    PrintTexTree(0, maklorenSubTree.root, output, diffContext);
-    fprintf(output, "+ o(%c^{%d}), %c \\to 0$\n\n", variable, accuracy, variable);
-    //PrintBigNodes(output, diffContext);
-
-    //TreeDtor(&maklorenTree);
 }

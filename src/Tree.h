@@ -52,6 +52,7 @@ enum KeyWords {
     KEY_CRY,
     KEY_DOT,
     KEY_GOBBLE,
+    KEY_DIFF,
 };
 
 enum Operators {

@@ -33,10 +33,10 @@ Node* MakeTreeFromStack(Stack* nodesStack);
 
 int32_t Convert1251ToUtf8 (const char* input, char* output);
 
-Node* Differentiate (Node* root, FILE* output, DiffContext* diffContext, bool logFlag);
+Node* Differentiate (Node* root);
 Node* Copy (Node* root);
 Node* MakeFactor(int32_t factor);
-void OptimisationAfterDiff(Tree* tree);
+Node* OptimisationAfterDiff(Node* node);
 
 int32_t FoldConst(Node* node);
 int32_t CutEqualNodes(Context context);

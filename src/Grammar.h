@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "Differ.h"
 #include "Text.h"
 #include "Tree.h"
 #include "Utilities.h"
@@ -26,7 +27,6 @@ struct Tokens {
 };
 
 const int32_t MAX_EXPRESSION_LENGTH = 200;
-const int32_t FAIL = 0;
 
 const char CALC_FILE[] = "expr.txt";
 const char KEYS_FILE[] = "keys.txt";

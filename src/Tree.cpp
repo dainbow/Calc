@@ -193,6 +193,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
         assert(FAIL && "UNKNOWN OPERAND TYPE");
         break;
     default:
+        fprintf(stderr, "TYPE IS %d", root->type);
         assert(FAIL && "UNKNOWN OPERAND TYPE");
         break;
     }

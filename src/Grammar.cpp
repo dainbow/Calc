@@ -119,6 +119,22 @@ Node* GetF(Node** pointer) {
     return conkNode;                                                                                \
     break
 
+Node* GetD(Node** pointer) {
+    assert( pointer != nullptr);
+    assert(*pointer != nullptr);
+
+    if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DIFF)) {
+        (*pointer)++;
+        Node* diffResult = Differentiate(GetE(pointer));
+        diffResult       = OptimisationAfterDiff(diffResult);
+
+        return diffResult;
+    }
+    else {
+        return GetE(pointer);
+    }
+}
+
 Node* GetK(Node** pointer) {
     assert( pointer != nullptr);
     assert(*pointer != nullptr);
@@ -127,11 +143,14 @@ Node* GetK(Node** pointer) {
     Node* retValue = *pointer;
 
     switch ((**pointer).data.operation) {
+        case KEY_DIFF:
+            retValue = GetD(pointer);
+            break;
         case KEY_GOBBLE: {
             IO_CONSTRUCTION(GetV);
         }
         case KEY_CRY: {
-            IO_CONSTRUCTION(GetE);
+            IO_CONSTRUCTION(GetD);
         }
         case KEY_RETURN:
             (*pointer)++;
@@ -143,7 +162,7 @@ Node* GetK(Node** pointer) {
         case KEY_WHILE:
         case KEY_IF:
             (*pointer)++;
-            retValue->left  = GetE(pointer);
+            retValue->left  = GetD(pointer);
             break;
         case KEY_FOR: {
             (*pointer)++;
@@ -153,18 +172,18 @@ Node* GetK(Node** pointer) {
                 retValue->left = (*pointer)++;
                 retValue->left->left = whoNode;
                 
-                Node* fromNode = GetE(pointer);
+                Node* fromNode = GetD(pointer);
                 if (((**pointer).data.operation == KEY_TO) && ((**pointer).type == TYPE_KEYWORD)) {
                     retValue->left->right = (*pointer)++;
                     retValue->left->right->left = fromNode;
 
-                    Node* toNode = GetE(pointer);
+                    Node* toNode = GetD(pointer);
                     
                     if (((**pointer).data.operation == KEY_WITH) && ((**pointer).type == TYPE_KEYWORD)) {
                         retValue->left->right->right = (*pointer)++;
 
                         retValue->left->right->right->left  = toNode;
-                        retValue->left->right->right->right = GetE(pointer);
+                        retValue->left->right->right->right = GetD(pointer);
                     }
                     else {
                         retValue->left->right->right = toNode;
@@ -266,10 +285,10 @@ Node* GetS(Node** pointer) {
         retValue->left = GetV(pointer);
         
         (*pointer)++;
-        retValue->right = GetE(pointer);
+        retValue->right = GetD(pointer);
     }
     else if (((*(*pointer + 1)).type == TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_TO)) {
-        Node* expression = GetE(pointer);
+        Node* expression = GetD(pointer);
 
         if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_TO)) {
             retValue = *pointer;
@@ -283,7 +302,7 @@ Node* GetS(Node** pointer) {
         }
     }
     else {
-        retValue = GetE(pointer);
+        retValue = GetD(pointer);
     }
     
     if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == EOL_OP)) {
@@ -422,7 +441,7 @@ Node* GetP(Node** pointer) {
     if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
         (*pointer)++;
 
-        retValue = GetE(pointer);
+        retValue = GetD(pointer);
 
         Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
     }
@@ -446,7 +465,7 @@ Node* GetP(Node** pointer) {
                     }
                 }
 
-                bottomPtr->left = GetE(pointer);
+                bottomPtr->left = GetD(pointer);
                 firstTimeFlag = 0;
             }
 

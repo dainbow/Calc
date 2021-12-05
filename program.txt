@@ -1,0 +1,9 @@
+main begin
+x in 12 $
+a in diff (x ^ 2) $
+
+cry "a is", a dot
+
+
+lilEnd
+bigEnd
