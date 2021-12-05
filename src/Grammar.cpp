@@ -86,6 +86,7 @@ Node* GetF(Node** pointer) {
         }
     }
 
+    retValue->type = TYPE_FUNC;
     return retValue;
 }
 

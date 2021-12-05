@@ -1,0 +1,59 @@
+jump main
+print:
+pop {bx + 0}
+push {bx + 0}
+push 1.000000
+add
+pop {bx + 0}
+push {bx + 0}
+ret
+main:
+push 0.000000
+pop {bx + 0}
+push 10.000000
+pop {bx + 4}
+push 1.000000
+pop {bx + 8}
+push {bx + 4}
+push 0.000000
+sub
+push 0
+ja compareg0
+push 0
+jump comparezero0
+compareg0:
+push 1
+comparezero0:
+push 0
+je whileend0
+while0:
+push {bx + 0}
+push {bx + 8}
+push 12
+push bx
+add
+pop bx
+call print
+push bx
+push 12
+sub
+pop bx
+add
+pop {bx + 0}
+push {bx + 4}
+push 1.000000
+sub
+pop {bx + 4}
+push {bx + 4}
+push 0.000000
+sub
+push 0
+ja compareg1
+push 0
+jump comparezero1
+compareg1:
+push 1
+comparezero1:
+push 0
+jne while0
+whileend0:

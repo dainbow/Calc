@@ -10,7 +10,7 @@
     N::= TYPE_CONST
 */
 
-#include "Grammar.h"
+#include "Calc.h"
 
 int main() {
     Text expression = {};
@@ -36,6 +36,7 @@ int main() {
     MakeAST(&AST, &tokens);
     
     MakeTreeGraph(&AST, G_STANDART_NAME);
+    GenerateCode(&AST);
 
     printf("OK\n");
     //TreeDtor(&AST);

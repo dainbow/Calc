@@ -30,7 +30,7 @@ char* MakeTreeGraph(Tree* tree, const char name[]) {
     
     system(cd);
     system(command);
-    //system(del);
+    system(del);
     system(start);
     
 

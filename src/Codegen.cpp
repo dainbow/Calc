@@ -4,7 +4,7 @@ void GenerateCode(Tree* AST) {
     assert(AST != nullptr);
 
     StackCtor(offsetStack);
-    char* endName = 0;
+    char endName[MAX_FILE_NAME_LENGTH] = "";
 
     GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
     FILE* output = fopen(endName, "w");
@@ -12,6 +12,7 @@ void GenerateCode(Tree* AST) {
     CodegenContext* context = (CodegenContext*)calloc(1, sizeof(context[0]));
     context->offsetStack    = &offsetStack; 
 
+    fprintf(output, "jump main\n");
     ASTBypass(AST->root, output, context);
 
     StackDtor(&offsetStack);
@@ -23,13 +24,19 @@ void ASTBypass(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    SkipStrConk(AST, output, context);
+    if (SkipConk(AST, output, context))
+        return;
 
-    ProcessFunction(AST, output, context);
-    ProcessKeyword(AST, output, context);
+    if (ProcessFunction(AST, output, context))
+        return;
+
+    if (ProcessKeyword(AST, output, context))
+        return;
+    
+    PushNode(AST, output, context);
 }
 
-void ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
+bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
     assert(output  != nullptr);
     assert(context != nullptr);
@@ -42,12 +49,12 @@ void ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
             case KEY_FOR:
                 ProcessFor(AST, output, context);
                 break;
-            /*case KEY_WHILE:
+            case KEY_WHILE:
                 ProcessWhile(AST, output, context);
                 break;
             case KEY_RETURN:
                 ProcessReturn(AST, output, context);
-                break;*/
+                break;
             case KEY_IN:
                 ProcessIn(AST, output, context);
                 break;
@@ -59,7 +66,87 @@ void ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
                 abort();
                 break;
         }
+
+        return 1;
     }
+
+    return 0;
+}
+
+void ProcessWhile(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
+
+    PushNode(AST->left, output, context);
+    fprintf(output, "push 0\n");
+
+    fprintf(output, "je whileend%u\n", context->amounts.whileAmount);
+    fprintf(output, "while%u:\n", context->amounts.whileAmount);
+
+    ASTBypass(AST->right->left, output, context);
+
+    PushNode(AST->left, output, context);
+    fprintf(output, "push 0\n");
+    fprintf(output, "jne while%u\n", context->amounts.whileAmount);
+
+    fprintf(output, "whileend%u:\n", context->amounts.whileAmount);
+
+    context->amounts.whileAmount++;
+    context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
+}
+
+void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
+
+    uint32_t fromOffset = MakeLocalVar(AST->left->left->data.expression, context);
+
+    int32_t fromValue = AST->left->right->left->data.number;
+    int32_t toValue   = 0;
+    int32_t iterValue = 0;
+
+    if (AST->left->right->right->type == TYPE_KEYWORD) {
+        toValue   = AST->left->right->right->left->data.number;
+        iterValue = AST->left->right->right->right->data.number;
+    }
+    else {
+        toValue   = AST->left->right->right->data.number;
+        iterValue = 1;
+    }
+
+    fprintf(output, "push %d\n", fromValue);
+    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+
+    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    fprintf(output, "push %d\n", toValue);
+
+    (iterValue > 0) ? fprintf(output, "ja forend%u\n", context->amounts.forAmount) :
+                      fprintf(output, "jb forend%u\n", context->amounts.forAmount);
+    
+    fprintf(output, "for%u:\n", context->amounts.forAmount);
+    
+    ASTBypass(AST->right->right, output, context);
+
+    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    fprintf(output, "push %d\n", iterValue);
+    fprintf(output, "add\n");
+    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+
+    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    fprintf(output, "push %d\n", toValue);
+
+    (iterValue > 0) ? fprintf(output, "jb for%u\n", context->amounts.forAmount) :
+                      fprintf(output, "ja for%u\n", context->amounts.forAmount);
+    fprintf(output, "forend%u:\n", context->amounts.forAmount);
+    
+    context->amounts.forAmount++;
+    context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
 }
 
 void ProcessReturn(Node* AST, FILE* output, CodegenContext* context) {
@@ -67,7 +154,7 @@ void ProcessReturn(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    PushNode(AST->right, output, context);
+    ASTBypass(AST->left, output, context);
     fprintf(output, "ret\n");
 }
 
@@ -77,9 +164,9 @@ void ProcessTo(Node* AST, FILE* output, CodegenContext* context) {
     assert(context != nullptr);
 
     uint32_t varOffset = MakeLocalVar(AST->right->data.expression, context);
-    PushNode(AST->left, output, context);
+    ASTBypass(AST->left, output, context);
 
-    fprintf(output, "pop {bx + %u}\n", varOffset);
+    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
 }
 
 void ProcessIn(Node* AST, FILE* output, CodegenContext* context) {
@@ -88,44 +175,44 @@ void ProcessIn(Node* AST, FILE* output, CodegenContext* context) {
     assert(context != nullptr);
 
     uint32_t varOffset = MakeLocalVar(AST->left->data.expression, context);
-    PushNode(AST->right, output, context);
+    ASTBypass(AST->right, output, context);
 
-    fprintf(output, "pop {bx + %u}\n", varOffset);
+    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
 }
 
 void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
     assert(output  != nullptr);
     assert(context != nullptr);
-    StackPush(context->offsetStack, context->offset);
+    StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
     PushNode(AST->left, output, context);
     
     fprintf(output, "push 0\n");
-    fprintf(output, "je ifend%u\n", context->ifAmount);
+    fprintf(output, "je ifend%u\n", context->amounts.ifAmount);
 
     ASTBypass(AST->right->left, output, context);
 
-    fprintf(output, "ifend%u:\n", context->ifAmount);
-    context->ifAmount++;
+    fprintf(output, "ifend%u:\n", context->amounts.ifAmount);
+    context->amounts.ifAmount++;
 
     if (AST->right->right != nullptr) {
         ASTBypass(AST->right->right, output, context);
     }
 
-    context->offset = StackPop(context->offsetStack);
+    context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
 }
 
-void ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
+bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
     assert(output  != nullptr);
     assert(context != nullptr);
 
     if (AST->type == TYPE_FUNC) {
         if (!context->ifInFunction) {
-            StackPush(context->offsetStack, context->offset);
+            StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
-            fprintf(output, "%s:", AST->data.expression);
+            fprintf(output, "%s:\n", AST->data.expression);
 
             int32_t paramAmount = 0;
             if (AST->left != nullptr) {
@@ -136,7 +223,8 @@ void ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
             context->ifInFunction = 1;
             ASTBypass(AST->right, output, context);
 
-            context->offset = StackPop(context->offsetStack);
+            context->offset       = (uint32_t)(int64_t)StackPop(context->offsetStack);
+            context->ifInFunction = 0;
         }
         else {
             if ((AST->right != nullptr)        &&
@@ -148,7 +236,11 @@ void ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
                 ExecuteFunction(AST, output, context);
             }
         }
+
+        return 1;
     }
+
+    return 0;
 }
 
 int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
@@ -185,19 +277,23 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
     assert(context != nullptr);
 
     if (AST->left != nullptr) {
-        PushNode(AST->left, output, context);
+        ASTBypass(AST->left, output, context);
     }
 
     if (AST->right != nullptr) {
-        PushNode(AST->right, output, context);
+        ASTBypass(AST->right, output, context);
     }
 
     if (AST->type == TYPE_CONST) {
-        fprintf(output, "push %f\n", AST->data.number);
+        fprintf(output, "push %f\n", (double)AST->data.number);
     }
 
     if (AST->type == TYPE_VAR) {
-        fprintf(output, "push {bx + %d}\n", GetVarOffset(AST->data.expression, context));
+        int32_t varOffset = GetVarOffset(AST->data.expression, context);
+        if (varOffset == -1)
+            assert(0 && "UNKNOWN VAR");
+
+        fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
     }
 
     if (AST->type == TYPE_OP) {
@@ -228,7 +324,7 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         fprintf(output, "pop cx\n");
 
         fprintf(output, "push cx\n");
-        fprintf(output, "pow%u:\n", context->powerAmount);
+        fprintf(output, "pow%u:\n", context->amounts.powerAmount);
         
         fprintf(output, "push ax\n");
         fprintf(output, "push 1\n");
@@ -240,63 +336,71 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
 
         fprintf(output, "push ax\n");
         fprintf(output, "push 1\n");
-        fprintf(output, "ja pow%u\n", context->powerAmount);
+        fprintf(output, "ja pow%u\n", context->amounts.powerAmount);
 
-        context->powerAmount++;
+        context->amounts.powerAmount++;
         break;
     case L_OP:
         fprintf(output, "sub\n");
-
-        fprintf(output, "jb compareg%u\n", context->compareAmount);
-        
-        fprintf(output, "pop\n");
         fprintf(output, "push 0\n");
 
-        fprintf(output, "compareg%u:\n", context->compareAmount);
+        fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
+        fprintf(output, "push 0\n");
+        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        context->compareAmount++;
+        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        fprintf(output, "push 1\n");
+        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+
+        context->amounts.compareAmount++;
         break;
     case LEQ_OP:
         fprintf(output, "push 1\n");
         fprintf(output, "add\n");
 
         fprintf(output, "sub\n");
+        fprintf(output, "push 0\n");
 
-        fprintf(output, "jb compareg%u\n", context->compareAmount);
-        
-        fprintf(output, "pop");
-        fprintf(output, "push 0");
+        fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
+        fprintf(output, "push 0\n");
+        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        fprintf(output, "compareg%u:", context->compareAmount);
+        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        fprintf(output, "push 1\n");
+        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
-        context->compareAmount++;
+        context->amounts.compareAmount++;
         break;
     case G_OP:
         fprintf(output, "sub\n");
+        fprintf(output, "push 0\n");
 
-        fprintf(output, "ja compareg%u\n", context->compareAmount);
-        
-        fprintf(output, "pop");
-        fprintf(output, "push 0");
+        fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
+        fprintf(output, "push 0\n");
+        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        fprintf(output, "compareg%u:", context->compareAmount);
+        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        fprintf(output, "push 1\n");
+        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
-        context->compareAmount++;
+        context->amounts.compareAmount++;
         break;
     case GEQ_OP:
         fprintf(output, "push 1\n");
-        fprintf(output, "add\n");
-
         fprintf(output, "sub\n");
 
-        fprintf(output, "ja compareg%u\n", context->compareAmount);
-        
-        fprintf(output, "pop");
-        fprintf(output, "push 0");
+        fprintf(output, "sub\n");
+        fprintf(output, "push 0\n");
 
-        fprintf(output, "compareg%u:", context->compareAmount);
+        fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
+        fprintf(output, "push 0\n");
+        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        context->compareAmount++;
+        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        fprintf(output, "push 1\n");
+        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+
+        context->amounts.compareAmount++;
         break;
     default:
         break;
@@ -307,7 +411,7 @@ int32_t GetFuncArgAmount(int8_t* name, CodegenContext* context) {
     assert(name    != nullptr);
     assert(context != nullptr);
 
-    for (uint32_t curFunc = 0; curFunc < context->functionsAmount; curFunc++) {
+    for (uint32_t curFunc = 0; curFunc < context->amounts.functionsAmount; curFunc++) {
         if (!strcmp((const char*)context->functions[curFunc].name, (const char*)name)) {
             return context->functions[curFunc].paramAmount;
         }
@@ -327,7 +431,6 @@ int32_t GetVarOffset(int8_t* name, CodegenContext* context) {
         }
     }
 
-    assert(0 && "UNKNOWN VARIABLE");
     return -1;
 }
 
@@ -340,6 +443,7 @@ int32_t ProcessFuncArguments(Node* node, FILE* output, CodegenContext* context) 
 
     if (node->left != nullptr) {
         MakeLocalVar(node->left->data.expression, context);
+
         paramAmount++;
     }
 
@@ -348,7 +452,7 @@ int32_t ProcessFuncArguments(Node* node, FILE* output, CodegenContext* context) 
     }
 
     if (node->left != nullptr) {
-        fprintf(output, "pop {bx + %d}", rememberOffset);
+        fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * rememberOffset);
     }
 
     return paramAmount;
@@ -360,8 +464,8 @@ void MakeFunc(int8_t* name, CodegenContext* context, int32_t argAmount) {
 
     CheckFuncRepetitions(name, context);
 
-    context->functions[context->functionsAmount] = {name, argAmount};
-    context->functionsAmount++;
+    context->functions[context->amounts.functionsAmount] = {name, argAmount};
+    context->amounts.functionsAmount++;
 }
 
 uint32_t MakeLocalVar(int8_t* name, CodegenContext* context) {
@@ -375,9 +479,11 @@ uint32_t MakeLocalVar(int8_t* name, CodegenContext* context) {
 
         context->offset++;
 
+        printf("Made local var %s with offset %u\n", name, context->offset);
         return (context->offset - 1); 
     }
     else {
+        printf("Var %s already exist at %u offset\n", name, context->offset);
         return (uint32_t)repState;
     }
 }
@@ -386,20 +492,22 @@ void CheckFuncRepetitions(int8_t* name, CodegenContext* context) {
     assert(name    != nullptr);
     assert(context != nullptr);
 
-    for (uint32_t curFunc = 0; curFunc < context->functionsAmount; curFunc++) {
+    for (uint32_t curFunc = 0; curFunc < context->amounts.functionsAmount; curFunc++) {
         if (!strcmp((const char*)context->functions[curFunc].name, (const char*)name)) {
             assert(0 && "TWO VARS WITH EQUAL NAMES");
         }
     }
 }
 
-void SkipStrConk(Node* AST, FILE* output, CodegenContext* context) {
+bool SkipConk(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    if ((AST->type == TYPE_OP) &&
-        (AST->data.operation == '$')) {
+    if (((AST->type == TYPE_UNO)       &&
+         (AST->data.operation == EOL_OP)) ||
+        ((AST->type == TYPE_KEYWORD) &&
+         (AST->data.operation == KEY_LILEND))) {
         if (AST->left != nullptr) {
             ASTBypass(AST->left, output, context);
         }
@@ -407,7 +515,11 @@ void SkipStrConk(Node* AST, FILE* output, CodegenContext* context) {
         if (AST->right != nullptr) {
             ASTBypass(AST->right, output, context);
         }
+
+        return 1;
     }
+
+    return 0;
 }
 
 void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
@@ -415,12 +527,12 @@ void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    StackPush(context->offsetStack, context->offset);
+    StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
-    fprintf(output, "push %u\n", context->offset);
+    fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
     fprintf(output, "push bx\n");
-    fprintf(output, "add");
-    fprintf(output, "pop bx");
+    fprintf(output, "add\n");
+    fprintf(output, "pop bx\n");
 }
 
 void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
@@ -428,8 +540,10 @@ void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    context->offset = (!context->offsetStack->size) ? 0 : StackPop(context->offsetStack);
+    context->offset = (!context->offsetStack->size) ? 0 : (uint32_t)(int64_t)StackPop(context->offsetStack);
 
-    fprintf(output, "push %u\n", context->offset);
-    fprintf(output, "pop bx");
+    fprintf(output, "push bx\n");
+    fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
+    fprintf(output, "sub\n");
+    fprintf(output, "pop bx\n");
 }
