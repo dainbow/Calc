@@ -32,6 +32,7 @@ enum NodeDataTypes {
     TYPE_UNO     = 4,
     TYPE_KEYWORD = 5,
     TYPE_FUNC    = 6,
+    TYPE_STR     = 7,
 };
 
 enum KeyWords {
@@ -48,6 +49,9 @@ enum KeyWords {
     KEY_FOR,
     KEY_FROM,
     KEY_RETURN,
+    KEY_CRY,
+    KEY_DOT,
+    KEY_GOBBLE,
 };
 
 enum Operators {
@@ -57,12 +61,14 @@ enum Operators {
     MUL_OP   = '*',
     DIV_OP   = '/',
     POW_OP   = '^',
+    NON_OP   = '!',
     L_OP     = '<',
     LEQ_OP,
     G_OP     = '>',
     GEQ_OP,
     EQ_OP    = '=',
-    DEQ_OP,
+    DEQ_OP   = 100,
+    NEQ_OP,
     LEFT_ROUND_OP  = '(',
     RIGHT_ROUND_OP = ')',
     LEFT_SQR_OP    = '[',

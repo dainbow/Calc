@@ -12,8 +12,12 @@ void GenerateCode(Tree* AST) {
     CodegenContext* context = (CodegenContext*)calloc(1, sizeof(context[0]));
     context->offsetStack    = &offsetStack; 
 
-    fprintf(output, "jump main\n");
+    fprintf(output, "call main\n");
+    fprintf(output, "hlt\n");
+
     ASTBypass(AST->root, output, context);
+
+    PrintEndOfProgram(output, context);
 
     StackDtor(&offsetStack);
     fclose(output);
@@ -43,6 +47,12 @@ bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
 
     if (AST->type == TYPE_KEYWORD) {
         switch (AST->data.operation) {
+            case KEY_GOBBLE:
+                ProcessGobble(AST, output, context);
+                break;
+            case KEY_CRY:
+                ProcessCry(AST, output, context);
+                break;
             case KEY_IF:
                 ProcessIf(AST, output, context);
                 break;
@@ -121,9 +131,9 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     }
 
     fprintf(output, "push %d\n", fromValue);
-    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
 
-    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
     fprintf(output, "push %d\n", toValue);
 
     (iterValue > 0) ? fprintf(output, "ja forend%u\n", context->amounts.forAmount) :
@@ -147,6 +157,19 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     
     context->amounts.forAmount++;
     context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
+}
+
+void ProcessGobble(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    uint32_t varOffset = MakeLocalVar(AST->left->data.expression, context);
+    fprintf(output, "in {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+
+    if (AST->right != nullptr) {
+        ProcessGobble(AST->right, output, context);
+    }
 }
 
 void ProcessReturn(Node* AST, FILE* output, CodegenContext* context) {
@@ -185,22 +208,39 @@ void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
     StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
+    uint32_t ifAmount = context->amounts.ifAmount++;
 
     PushNode(AST->left, output, context);
     
     fprintf(output, "push 0\n");
-    fprintf(output, "je ifend%u\n", context->amounts.ifAmount);
+    fprintf(output, "je ifelse%u\n", ifAmount);
 
     ASTBypass(AST->right->left, output, context);
+    fprintf(output, "jump ifend%u\n", ifAmount);
 
-    fprintf(output, "ifend%u:\n", context->amounts.ifAmount);
-    context->amounts.ifAmount++;
+    fprintf(output, "ifelse%u:\n", ifAmount);
 
     if (AST->right->right != nullptr) {
         ASTBypass(AST->right->right, output, context);
     }
+    fprintf(output, "ifend%u:\n", ifAmount);
 
     context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
+}
+
+void ProcessCry(Node* AST, FILE* output, CodegenContext* context) {
+    assert(AST     != nullptr);
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    ASTBypass(AST->left, output, context);
+    if (AST->left->type != TYPE_STR) {
+        fprintf(output, "out 1\n");
+    }
+
+    if (AST->right != nullptr) {
+        ProcessCry(AST->right, output, context);
+    }
 }
 
 bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
@@ -221,7 +261,9 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
 
             MakeFunc(AST->data.expression, context, paramAmount);
             context->ifInFunction = 1;
+            
             ASTBypass(AST->right, output, context);
+            fprintf(output, "ret\n");
 
             context->offset       = (uint32_t)(int64_t)StackPop(context->offsetStack);
             context->ifInFunction = 0;
@@ -250,8 +292,9 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
 
     int32_t paramAmount = 0;
     if (AST->left != nullptr) {
-        PushNode(AST->left, output, context);
-        paramAmount++;
+        ASTBypass(AST->left, output, context);
+        if (AST->left->type != TYPE_STR)
+            paramAmount++;
     }
 
     if (AST->right != nullptr) {
@@ -288,6 +331,20 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
         fprintf(output, "push %f\n", (double)AST->data.number);
     }
 
+    if (AST->type == TYPE_STR) {
+        int32_t stringNum = 0;
+
+        if ((stringNum = FindString(AST->data.expression, context)) != -1) {
+            fprintf(output, "strout str%d\n", stringNum);
+        }
+        else {
+            fprintf(output, "strout str%u\n", context->amounts.strAmount);
+
+            context->stringsArray[context->amounts.strAmount] = AST->data.expression;
+            context->amounts.strAmount++;
+        }
+    }
+
     if (AST->type == TYPE_VAR) {
         int32_t varOffset = GetVarOffset(AST->data.expression, context);
         if (varOffset == -1)
@@ -320,25 +377,7 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         fprintf(output, "mul\n");
         break;
     case POW_OP:
-        fprintf(output, "pop ax\n");
-        fprintf(output, "pop cx\n");
-
-        fprintf(output, "push cx\n");
-        fprintf(output, "pow%u:\n", context->amounts.powerAmount);
-        
-        fprintf(output, "push ax\n");
-        fprintf(output, "push 1\n");
-        fprintf(output, "sub\n");
-        fprintf(output, "pop ax");
-
-        fprintf(output, "push cx\n");
-        fprintf(output, "mul\n");
-
-        fprintf(output, "push ax\n");
-        fprintf(output, "push 1\n");
-        fprintf(output, "ja pow%u\n", context->amounts.powerAmount);
-
-        context->amounts.powerAmount++;
+        fprintf(output, "pow\n");
         break;
     case L_OP:
         fprintf(output, "sub\n");
@@ -393,6 +432,34 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         fprintf(output, "push 0\n");
 
         fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
+        fprintf(output, "push 0\n");
+        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+
+        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        fprintf(output, "push 1\n");
+        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+
+        context->amounts.compareAmount++;
+        break;
+    case DEQ_OP:
+        fprintf(output, "sub\n");
+        fprintf(output, "push 0\n");
+
+        fprintf(output, "je compareg%u\n", context->amounts.compareAmount);
+        fprintf(output, "push 0\n");
+        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+
+        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        fprintf(output, "push 1\n");
+        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+
+        context->amounts.compareAmount++;
+        break;
+    case NEQ_OP:
+        fprintf(output, "sub\n");
+        fprintf(output, "push 0\n");
+
+        fprintf(output, "jne compareg%u\n", context->amounts.compareAmount);
         fprintf(output, "push 0\n");
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
@@ -546,4 +613,27 @@ void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
     fprintf(output, "sub\n");
     fprintf(output, "pop bx\n");
+}
+
+int32_t FindString(int8_t* name, CodegenContext* context) {
+    assert(name    != nullptr);
+    assert(context != nullptr);
+
+    for (uint32_t curStr = 0; curStr < context->amounts.strAmount; curStr++) {
+        if (!strcmp((const char*)name, (const char*)context->stringsArray[curStr])) {
+            return curStr;
+        }
+    }
+
+    return -1;
+}
+
+void PrintEndOfProgram(FILE* output, CodegenContext* context) {
+    assert(output  != nullptr);
+    assert(context != nullptr);
+
+    for (uint32_t curStr = 0; curStr < context->amounts.strAmount; curStr++) {
+        fprintf(output, "str%u:\n", curStr);
+        fprintf(output, "db %s\n\n", context->stringsArray[curStr]);
+    }
 }

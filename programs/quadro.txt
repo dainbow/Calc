@@ -1,0 +1,60 @@
+CalculateD with a, b, c begin
+	spit b^2 - 4*a*c $
+lilEnd
+
+SolveLinear with b, c begin
+	vasyaSniff b == 0 begin
+		vasyaSniff c == 0 begin
+			cry "The equation has infinity amount of roots" dot
+		lilEnd
+		someoneSniff begin
+			cry "The equation doesnt have roots" dot
+		lilEnd
+	lilEnd
+	someoneSniff begin
+		cry "The equation has 1 root", -c / b dot
+	lilEnd
+lilEnd
+
+main begin
+
+cry "Please enter a b c koefs of equation" dot
+gobble a, b, c dot
+
+vasyaSniff a == 0 begin
+	SolveLinear(b, c) $
+lilEnd
+
+nextSniff b == 0 begin
+	vasyaSniff c < 0 begin
+		cry "The equation doesn't have roots" dot
+	lilEnd
+	nextSniff c == 0 begin
+		cry "The equation has 1 root", 0 dot
+	lilEnd
+	someoneSniff begin
+		cry "The equation has 2 roots", c ^ (1 / 2), -(c ^ (1 /2)) dot
+	lilEnd
+lilEnd
+
+nextSniff c == 0 begin
+	cry "The equation has 2 roots", 0, -b / a dot
+lilEnd
+
+someoneSniff begin
+	d in CalculateD(a, b, c) $
+
+	vasyaSniff d < 0 begin
+		cry "The equation doesnt have roots" dot
+	lilEnd
+	nextSniff d == 0 begin
+		cry "The equation has 1 root", -b / (2*a) dot
+	lilEnd
+	someoneSniff begin
+		d in d ^ (1 / 2) $
+		cry "The equation has 2 roots", (-b + d) / (2 * a), (-b - d) / (2 * a) dot
+	lilEnd
+lilEnd
+
+lilEnd 
+bigEnd

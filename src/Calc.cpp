@@ -2,27 +2,29 @@
     F::= V 'with' {V,}* begin {K | S}* 'lilEnd'
     K::= VasyaSniff | NextSniff | Homyak | Hire 
     S::= (V 'in' E) | (E 'to' V) | E EOL_OP
-    E::= T{[+-]T}*
+    E::= STR | T{[+-]T}*
     T::= {-}DEG{[*\]DEG}*
     DEG::= P{^P}
     P::= 'LEFT_ROUND_OP' E 'RIGHT_ROUND_OP' | V 'LEFT_ROUND_OP' E {,E}* 'RIGHT_ROUND_OP' | V | N
+
+    STR::= TYPE_STRING
     V::= TYPE_VAR
     N::= TYPE_CONST
 */
 
 #include "Calc.h"
 
-int main() {
+int main(int argc, char* argv[]) {
     Text expression = {};
     Text keywords   = {};
     Tokens tokens   = {};
 
-    MakeText(&expression, CALC_FILE);
+    MakeText(&expression, argv[1]);
     MakeText(&keywords, KEYS_FILE);
 
     AnalyseText(&expression, &tokens, &keywords);
     for (uint32_t curToken = 0; tokens.array[curToken].type != 0; curToken++) {
-        if (tokens.array[curToken].type == TYPE_VAR)
+        if ((tokens.array[curToken].type == TYPE_VAR) || (tokens.array[curToken].type == TYPE_STR))
             printf("'%s'[VAR], \n", tokens.array[curToken].data.expression);
         else if (tokens.array[curToken].type == TYPE_CONST)
             printf("'%d'[CONST], \n", tokens.array[curToken].data.number);

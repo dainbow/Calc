@@ -150,6 +150,15 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             case KEY_RETURN:
                 strcat(nodeData, "return");
                 break;
+            case KEY_CRY:
+                strcat(nodeData, "print");
+                break;
+            case KEY_DOT:
+                strcat(nodeData, ".");
+                break;
+            case KEY_GOBBLE:
+                strcat(nodeData, "read");
+                break;
             default:
                 fprintf(stderr, "INVALID KEYWORD %d\n", root->data.operation);
                 abort();
@@ -160,6 +169,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
         strcat(nodeData, (const char*)root->data.expression);
         strcat(nodeData, "()");
         break;
+    case TYPE_STR:
     case TYPE_VAR:
         strcat(nodeData, (const char*)root->data.expression);
         break;

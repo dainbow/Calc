@@ -14,6 +14,7 @@ const int32_t MAX_FUNCTION_RECURSION_DEPTH = 100;
 const int32_t MAX_VARIABLES_AMOUNT         = 100;
 const int32_t MAX_FUNCTIONS_AMOUNT         = 100;
 const int32_t MAX_FILE_NAME_LENGTH         = 100;
+const int32_t MAX_STRING_AMOUNT            = 100;
 
 const uint32_t MEMORY_CELL_SIZE = 4;
 
@@ -34,6 +35,7 @@ struct Amounts {
     uint32_t ifAmount;
     uint32_t forAmount;
     uint32_t whileAmount;
+    uint32_t strAmount;
 };
 
 struct CodegenContext {
@@ -44,6 +46,8 @@ struct CodegenContext {
     Amounts amounts;
 
     Stack* offsetStack;
+
+    int8_t* stringsArray[MAX_STRING_AMOUNT];
     Function functions[MAX_FUNCTIONS_AMOUNT];
     LocalVar variables[MAX_VARIABLES_AMOUNT];
 };
@@ -73,7 +77,17 @@ bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context);
 
 void ProcessWhile(Node* AST, FILE* output, CodegenContext* context);
 void ProcessFor(Node* AST, FILE* output, CodegenContext* context);
+
 void ProcessReturn(Node* AST, FILE* output, CodegenContext* context);
+
 void ProcessTo(Node* AST, FILE* output, CodegenContext* context);
 void ProcessIn(Node* AST, FILE* output, CodegenContext* context);
+
 void ProcessIf(Node* AST, FILE* output, CodegenContext* context);
+
+void ProcessCry(Node* AST, FILE* output, CodegenContext* context);
+void ProcessGobble(Node* AST, FILE* output, CodegenContext* context);
+
+int32_t FindString(int8_t* name, CodegenContext* context);
+
+void PrintEndOfProgram(FILE* output, CodegenContext* context);

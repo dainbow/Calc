@@ -1,0 +1,21 @@
+fact with n begin
+	vasyaSniff n <= 1 begin
+		spit 1 $
+	lilEnd
+	someoneSniff begin
+		spit n * fact(n - 1) $
+	lilEnd
+lilEnd
+
+
+main begin
+
+cry "Please enter n to calc n!" dot
+gobble n dot
+out in fact(n) $
+
+cry "Factorial of", n, "is", out dot
+
+lilEnd
+
+bigEnd
