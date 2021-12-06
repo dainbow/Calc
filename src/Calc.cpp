@@ -12,6 +12,8 @@
     N::= TYPE_CONST
 */
 
+//! Массивы, глобалки, декомпилятор
+
 #include "Calc.h"
 
 int main(int /*argc*/, char* argv[]) {

@@ -7,6 +7,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "commands.h"
+
 struct String {
     int8_t *value;
     size_t length;

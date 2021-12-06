@@ -659,10 +659,6 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
             int8_t* bufferRemember = tokens->database + databaseCounter;
             printf("FOUND STRING\n");
 
-            tokens->database[databaseCounter]     = '\"';
-            tokens->database[databaseCounter + 1] = EOL_OP;
-
-            databaseCounter += 2;
             curChar++;
 
             while (*curChar != '\"') {
@@ -672,11 +668,8 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 curChar++;
             }
 
-            tokens->database[databaseCounter] = '$';
-            tokens->database[databaseCounter + 1] = '\"';
-            tokens->database[databaseCounter + 2] = '\0';
-            
-            databaseCounter += 3;
+            tokens->database[databaseCounter] = '\0';
+            databaseCounter++;
 
             tokens->array[tokensCounter].data.expression = bufferRemember;
             tokens->array[tokensCounter].type            = TYPE_STR;

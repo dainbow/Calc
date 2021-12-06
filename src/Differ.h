@@ -16,7 +16,6 @@ struct Context {
     Node** prevNode;
 };
 
-const int32_t FAIL                 = 0;
 const int32_t MAX_TRASH_SIZE       = 100;
 const int32_t MAX_NODE_DATA_LENGTH = 20;
 

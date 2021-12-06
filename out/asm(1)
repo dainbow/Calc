@@ -259,22 +259,22 @@ ifend3:
 ifend2:
 ret
 str0:
-db "$The equation has infinity amount of roots$"
+db The equation has infinity amount of roots
 
 str1:
-db "$The equation doesnt have roots$"
+db The equation doesnt have roots
 
 str2:
-db "$The equation has 1 root$"
+db The equation has 1 root
 
 str3:
-db "$Please enter a b c koefs of equation$"
+db Please enter a b c koefs of equation
 
 str4:
-db "$The equation doesn't have roots$"
+db The equation doesn't have roots
 
 str5:
-db "$The equation has 2 roots$"
+db The equation has 2 roots
 
 call main
 hlt
@@ -537,20 +537,20 @@ ifend3:
 ifend2:
 ret
 str0:
-db "$The equation has infinity amount of roots$"
+db The equation has infinity amount of roots
 
 str1:
-db "$The equation doesnt have roots$"
+db The equation doesnt have roots
 
 str2:
-db "$The equation has 1 root$"
+db The equation has 1 root
 
 str3:
-db "$Please enter a b c koefs of equation$"
+db Please enter a b c koefs of equation
 
 str4:
-db "$The equation doesn't have roots$"
+db The equation doesn't have roots
 
 str5:
-db "$The equation has 2 roots$"
+db The equation has 2 roots
 

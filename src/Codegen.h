@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compilation.h"
 #include "Tree.h"
 #include "Graph.h"
 #include "Stack.h"
@@ -29,6 +30,7 @@ struct Function {
 };
 
 struct Amounts {
+    uint32_t argumentsAmount;
     uint32_t functionsAmount;
     uint32_t powerAmount;
     uint32_t compareAmount;
@@ -45,7 +47,10 @@ struct CodegenContext {
 
     Amounts amounts;
 
-    Stack* offsetStack;
+    Stack*  offsetStack;
+    Labels* labels;
+    Arguments* arguments;
+    CompileResult* result;
 
     int8_t* stringsArray[MAX_STRING_AMOUNT];
     Function functions[MAX_FUNCTIONS_AMOUNT];
