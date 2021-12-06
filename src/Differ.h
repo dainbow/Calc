@@ -52,3 +52,5 @@ void StopTex(FILE* output, char* outputName, Node* beginNode, Node* node, DiffCo
 void SubstituteVars(Node* node, int8_t* varData, int32_t value);
 
 void MakeMakloren(FILE* output, Node* node, int32_t accuracy, int8_t* variable, DiffContext* diffContext);
+
+bool CheckDoubleEquality(double first, double second);

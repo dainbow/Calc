@@ -16,19 +16,26 @@ Node* GetG(Node** pointer) {
     assert(pointer  != nullptr);
     assert(*pointer != nullptr);
 
-    Node* retValue = GetF(pointer);
+    Node* retValue = GetExternal(pointer);
     
     printf("type is %d; operation is %c\n", (**pointer).type, (**pointer).data.operation);
-    
-    if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_LILEND)) {
-        (*pointer)->left = retValue;
-        retValue = *pointer;
 
-        (*pointer)++;
-    }
+    return retValue;
+}
+
+Node* GetExternal(Node** pointer) {
+    assert( pointer != nullptr);
+    assert(*pointer != nullptr);
+
+    Node* retValue = 0;
+
+    if (((*pointer + 1)->type == TYPE_KEYWORD) && 
+        (((*pointer + 1)->data.operation == KEY_WITH) ||
+         ((*pointer + 1)->data.operation == KEY_BEGIN)))
+        retValue = GetF(pointer);
     else {
-        assert("SYNTAX ERROR, EOF NOT FOUND");
-    }
+        retValue = GetS(pointer);
+    }   
 
     return retValue;
 }
@@ -75,10 +82,10 @@ Node* GetF(Node** pointer) {
                 case TYPE_STR:
                 case TYPE_VAR:
                 case TYPE_FUNC:
-                    printf("GetS looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+                    printf("GetF looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
                     break;
                 default:
-                    printf("GetS looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+                    printf("GetF looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
                     break;
             }
 
@@ -88,6 +95,27 @@ Node* GetF(Node** pointer) {
     }
 
     retValue->type = TYPE_FUNC;
+
+    if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_LILEND)) {
+        (*pointer)->left = retValue;
+        retValue = *pointer;
+
+        (*pointer)++;
+    }
+    else {
+        switch ((**pointer).type) {
+                case TYPE_STR:
+                case TYPE_VAR:
+                case TYPE_FUNC:
+                    printf("GetP looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
+                    break;
+                default:
+                    printf("GetP looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+                    break;
+            }
+        assert("SYNTAX ERROR, EOF NOT FOUND");
+    }
+
     return retValue;
 }
 
@@ -115,7 +143,7 @@ Node* GetF(Node** pointer) {
         retValue->left = remember;                                                                  \
     }                                                                                               \
                                                                                                     \
-    Node* conkNode = MakeNewNode(EOL_OP, 0, TYPE_UNO, retValue, 0);                                 \
+    Node* conkNode = MakeNewNode(EOL_OP, 0, 0, TYPE_UNO, retValue, 0);                              \
     return conkNode;                                                                                \
     break
 
@@ -221,7 +249,7 @@ Node* GetK(Node** pointer) {
             printf("GetK looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
             break;
         default:
-            printf("GetK looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+            printf("GetK looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
             break;
         }
 
@@ -252,7 +280,7 @@ Node* GetK(Node** pointer) {
         }
         (*pointer)++;
     }
-    Node* connector = MakeNewNode(EOL_OP, 0, TYPE_UNO, retValue, 0);
+    Node* connector = MakeNewNode(EOL_OP, 0, 0, TYPE_UNO, retValue, 0);
     retValue = connector;
 
     return retValue;
@@ -275,7 +303,7 @@ Node* GetS(Node** pointer) {
             printf("GetS looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
             break;
         default:
-            printf("GetS looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+            printf("GetS looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
             break;
     }
 
@@ -318,7 +346,7 @@ Node* GetS(Node** pointer) {
                 printf("Error while looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
                 break;
             default:
-                printf("Error while looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+                printf("Error while looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
                 break;
         }
 
@@ -418,21 +446,21 @@ Node* GetP(Node** pointer) {
                     printf("GetP looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
                     break;
                 default:
-                    printf("GetP looking at %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+                    printf("GetP looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
                     break;
             }
 
     while ((**pointer).type == TYPE_OP) {
         if ((**pointer).data.operation == SUB_OP) {
             if (bottom == nullptr) {
-                bottom        = MakeNewNode(MUL_OP, 0, TYPE_OP, 0, 0);
+                bottom        = MakeNewNode(MUL_OP, 0, 0, TYPE_OP, 0, 0);
             }
             else {
-                bottom->right = MakeNewNode(MUL_OP, 0, TYPE_OP, 0, 0);
+                bottom->right = MakeNewNode(MUL_OP, 0, 0, TYPE_OP, 0, 0);
                 bottom = bottom->right;
             }
 
-            bottom->left = MakeNewNode(-1, 0, TYPE_CONST, 0, 0);
+            bottom->left = MakeNewNode(0, -1, 0, TYPE_CONST, 0, 0);
         }
 
         (*pointer)++;
@@ -526,7 +554,7 @@ Node* GetN(Node** pointer) {
             printf("CAN'T EAT %s with type %d\n", (**pointer).data.expression, (**pointer).type);
             break;
         default:
-            printf("CAN'T EAT %c[%d] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
+            printf("CAN'T EAT %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
             break;
         }
         
@@ -592,10 +620,32 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 break;
         }
         else if ((*curChar >= '0') && (*curChar <= '9')) {
-            int32_t value = 0;
+            double value = 0;
+            uint32_t digitsAfterDot = 0;
             
-            while ((*curChar >= '0') && (*curChar <= '9')) {
-                value = 10*value + (*curChar - '0');
+            while (((*curChar >= '0') && 
+                    (*curChar <= '9')) || 
+                    (*curChar == '.')) {
+                if (*curChar == '.') {
+                    if (digitsAfterDot == 0) {
+                        digitsAfterDot++;
+                    }
+                    else {
+                        assert(FAIL && "DOUBLE DOT AT NUMBER");
+                    }
+
+                    curChar++;
+                }
+
+                if (digitsAfterDot) {
+                    value += (*curChar - '0') / pow(10, digitsAfterDot);
+
+                    digitsAfterDot++;
+                }
+                else {
+                    value = 10*value + (*curChar - '0');
+                }
+
                 curChar++;
             }
             curChar--;

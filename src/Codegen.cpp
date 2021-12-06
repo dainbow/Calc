@@ -117,9 +117,9 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
 
     uint32_t fromOffset = MakeLocalVar(AST->left->left->data.expression, context);
 
-    int32_t fromValue = AST->left->right->left->data.number;
-    int32_t toValue   = 0;
-    int32_t iterValue = 0;
+    double fromValue = AST->left->right->left->data.number;
+    double toValue   = 0;
+    double iterValue = 0;
 
     if (AST->left->right->right->type == TYPE_KEYWORD) {
         toValue   = AST->left->right->right->left->data.number;
@@ -130,26 +130,26 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
         iterValue = 1;
     }
 
-    fprintf(output, "push %d\n", fromValue);
+    fprintf(output, "push %lf\n", fromValue);
     fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
 
     fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
-    fprintf(output, "push %d\n", toValue);
+    fprintf(output, "push %lf\n", toValue);
 
     (iterValue > 0) ? fprintf(output, "ja forend%u\n", context->amounts.forAmount) :
                       fprintf(output, "jb forend%u\n", context->amounts.forAmount);
     
     fprintf(output, "for%u:\n", context->amounts.forAmount);
     
-    ASTBypass(AST->right->right, output, context);
+    ASTBypass(AST->right->left, output, context);
 
     fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
-    fprintf(output, "push %d\n", iterValue);
+    fprintf(output, "push %lf\n", iterValue);
     fprintf(output, "add\n");
     fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
 
     fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
-    fprintf(output, "push %d\n", toValue);
+    fprintf(output, "push %lf\n", toValue);
 
     (iterValue > 0) ? fprintf(output, "jb for%u\n", context->amounts.forAmount) :
                       fprintf(output, "ja for%u\n", context->amounts.forAmount);

@@ -36,7 +36,7 @@ void NodeDtor(Node* root) {
     free(root);
 }
 
-Node* MakeNewNode(int32_t number, int8_t* expression, NodeDataTypes type, Node* left, Node* right) {
+Node* MakeNewNode(int8_t operation, double number, int8_t* expression, NodeDataTypes type, Node* left, Node* right) {
     Node* newNode = (Node*)calloc(1, sizeof(newNode[0]));
 
     uint32_t nodeWeight = 1;
@@ -51,8 +51,11 @@ Node* MakeNewNode(int32_t number, int8_t* expression, NodeDataTypes type, Node* 
     if (type == TYPE_VAR) {
         newNode->data.expression = expression;
     }
-    else {
+    else if (type == TYPE_CONST) {
         newNode->data.number = number;
+    }
+    else {
+        newNode->data.operation = operation;
     }
     newNode->type   =  type;
     newNode->weight = nodeWeight; 
@@ -85,7 +88,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
 
     switch (root->type) {
     case TYPE_CONST:
-        itoa(root->data.number, nodeData, 10);
+        sprintf(nodeData, "%lf", root->data.number);
         break;
     case TYPE_OP:
         if (root->data.operation == 'l') {
@@ -181,10 +184,11 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             case (int32_t)'c':
                 strcat(nodeData, "cos");
                 break;
-            case '$':
+            case EOL_OP:
                 strcat(nodeData, "$$$");
                 break;
             default:
+                printf("UNKNOWN UNO IS %c[%d]\n", root->data.operation, root->data.operation);
                 assert(FAIL && "UNKNOWN UNO OPERAND");
                 break;
         }

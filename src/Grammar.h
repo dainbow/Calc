@@ -34,6 +34,7 @@ const char KEYS_FILE[] = "keys.txt";
 void MakeAST(Tree* AST, Tokens* tokens);
 
 Node* GetG(Node** pointer);
+Node* GetExternal(Node** pointer);
 Node* GetE(Node** pointer);
 Node* GetT(Node** pointer);
 Node* GetP(Node** pointer);

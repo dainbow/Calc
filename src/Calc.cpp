@@ -27,11 +27,11 @@ int main(int /*argc*/, char* argv[]) {
         if ((tokens.array[curToken].type == TYPE_VAR) || (tokens.array[curToken].type == TYPE_STR))
             printf("'%s'[VAR], \n", tokens.array[curToken].data.expression);
         else if (tokens.array[curToken].type == TYPE_CONST)
-            printf("'%d'[CONST], \n", tokens.array[curToken].data.number);
+            printf("'%lf'[CONST], \n", tokens.array[curToken].data.number);
         else if ((tokens.array[curToken].type == TYPE_OP) || (tokens.array[curToken].type == TYPE_UNO))
-            printf("'%c{%d}'[OP], \n", tokens.array[curToken].data.operation, tokens.array[curToken].data.number);
+            printf("'%c{%d}'[OP], \n", tokens.array[curToken].data.operation, tokens.array[curToken].data.operation);
         else if (tokens.array[curToken].type == TYPE_KEYWORD)
-            printf("'%c{%d}'[KEY], \n", tokens.array[curToken].data.operation, tokens.array[curToken].data.number);
+            printf("'%c{%d}'[KEY], \n", tokens.array[curToken].data.operation, tokens.array[curToken].data.operation);
     }
 
     TreeCtor(AST);

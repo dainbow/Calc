@@ -1,9 +1,12 @@
+pi in 3 $
+
 main begin
-x in 12 $
-a in diff (x ^ 2) $
+a in 0 $
 
-cry "a is", a dot
-
+hire eblan from 2.5 to 5 with 1.5 begin
+	a in a + eblan $
+	cry "a is", a dot
+lilEnd
 
 lilEnd
 bigEnd

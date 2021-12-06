@@ -1,15 +1,31 @@
 call main
 hlt
-main:
-push 12.000000
+push 3.000000
 pop {bx + 0}
-push 2.000000
-push {bx + 0}
-mul
+main:
+push 0.000000
+pop {bx + 4}
+push 2.500000
+pop {bx + 8}
+push {bx + 8}
+push 5.000000
+ja forend0
+for0:
+push {bx + 4}
+push {bx + 8}
+add
 pop {bx + 4}
 strout str0
 push {bx + 4}
 out 1
+push {bx + 8}
+push 1.500000
+add
+pop {bx + 8}
+push {bx + 8}
+push 5.000000
+jb for0
+forend0:
 ret
 str0:
 db "$a is$"

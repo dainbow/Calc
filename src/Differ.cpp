@@ -33,136 +33,6 @@
     printf("END\n");
 }*/
 
-void ScanBase(Text* input, Stack* stack) {
-    assert(input  != nullptr);
-    assert(stack  != nullptr);
-
-    int8_t  trashBuff[MAX_TRASH_SIZE] = "";
-
-    for (uint32_t curString = 0; curString < input->strAmount; curString++) {
-        for (uint32_t curChar = 0; curChar < input->strings[curString].length - 1; curChar++) {
-            int8_t* charPtr = input->strings[curString].value + curChar;
-
-            if ((*charPtr != OPEN_BRACKET) && 
-                (curChar == 0)) {
-                StackPush(stack, charPtr);
-            }
-            else if ((*charPtr == OPEN_BRACKET) && 
-                    (sscanf((const char*)charPtr + 1, " %1[^(]", trashBuff))) {
-                for (uint32_t curIdx = curChar + 1; curIdx < input->strings[curString].length; curIdx++) {
-                    if (input->strings[curString].value[curIdx] == OPEN_BRACKET) {
-                        StackPush(stack, charPtr);
-                        break;
-                    }
-                    if (input->strings[curString].value[curIdx] == CLOSE_BRACKET) {
-                        break;
-                    }
-                }
-
-                StackPush(stack, charPtr + 1);
-            }
-            else if (*charPtr == OPEN_BRACKET) {
-                StackPush(stack, charPtr);
-            }
-            else if ((*charPtr == CLOSE_BRACKET) && 
-                    sscanf((const char*)charPtr + 1, " %1[^)]", trashBuff)) {
-                StackPush(stack, charPtr + 1);
-            }
-            else if (*charPtr == CLOSE_BRACKET) {
-                StackPush(stack, charPtr);
-            }
-        }
-    }
-}
-
-bool ReadTreeFromFile(Tree* tree, const char* inputFile) {
-    assert(tree != nullptr);
-    StackCtor(nodesStack);
-
-    if (ReadTextFromFile(&tree->qbase, inputFile) == 0)
-        return 0;
-
-    MakeStrings(&tree->qbase);
-    ProcessStrings(&tree->qbase);
-
-    ScanBase(&tree->qbase, &nodesStack);
-    tree->root = MakeTreeFromStack(&nodesStack);
-
-    StackDtor(&nodesStack);
-    return 1;
-}
-
-Node* MakeTreeFromStack(Stack* nodesStack) {
-    assert(nodesStack != nullptr);
-    assert(nodesStack->size > 0);
-
-    StackCtor(treeStack);
-    StackCtor(queueStack);
-
-    Node* currentNode = 0;
-    Node* leftOne     = 0;
-    Node* rightOne    = 0;
-
-    int32_t nodeConvertedData       = 0;
-    NodeDataTypes nodeDataType      = TYPE_UNKNOWN;
-    int32_t currentParenthesisDepth = 0;
-
-    for (int32_t curIdx = 0; curIdx < nodesStack->size; curIdx++) {
-        nodeConvertedData = ProcessNodeData(StackPopIndexDEVELOPERS_ONLY(nodesStack, curIdx), &nodeDataType);
-        
-        if (nodeDataType == TYPE_UNKNOWN) {
-            if ((char)nodeConvertedData == OPEN_BRACKET) {
-                currentParenthesisDepth += 1;
-            }
-            else if ((char)nodeConvertedData == CLOSE_BRACKET) {
-                rightOne    = (Node*)StackPop(&queueStack);
-                currentNode = (Node*)StackPop(&queueStack);
-
-                currentNode->right = rightOne;
-                currentNode->weight++;
-
-                if (currentNode->type != TYPE_UNO) {
-                    leftOne     = (Node*)StackPop(&queueStack);
-
-                    currentNode->left  = leftOne;
-                    currentNode->weight++;
-                }
-                
-                currentParenthesisDepth -= 1;
-                if (currentParenthesisDepth) {
-                    StackPush(&queueStack, (StackElem)currentNode);
-                }
-                else {
-                    StackPush(&treeStack,  (StackElem)currentNode);
-                }
-            }
-            continue;
-        }
-        Node* newNode     = MakeNewNode(nodeConvertedData, 0, nodeDataType, nullptr, nullptr);
-
-        if (currentParenthesisDepth == 0) {
-            StackPush(&treeStack, (StackElem)newNode);
-        }
-        else {
-            StackPush(&queueStack, (StackElem)newNode);
-        }   
-    }
-
-    rightOne     = (Node*)StackPop(&treeStack);
-    currentNode  = (Node*)StackPop(&treeStack);
-    currentNode->right = rightOne;
-
-    if (currentNode->type != TYPE_UNO) {
-        leftOne      = (Node*)StackPop(&treeStack);
-        currentNode->left  = leftOne;
-    }
-    
-    StackDtor(&queueStack);
-    StackDtor(&treeStack);
-
-    return currentNode;
-}
-
 int32_t Convert1251ToUtf8 (const char* input, char* output) {
     assert (input    != nullptr);
     assert (output   != nullptr);
@@ -245,18 +115,18 @@ int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
 #define C(smth) Copy(smth)
 #define F(smth) MakeFactor(smth)
 
-#define MUL(first, second) MakeNewNode((int32_t)(MUL_OP), 0, TYPE_OP, first, second)
-#define DIV(first, second) MakeNewNode((int32_t)(DIV_OP), 0, TYPE_OP, first, second)
-#define ADD(first, second) MakeNewNode((int32_t)(ADD_OP), 0, TYPE_OP, first, second)
-#define SUB(first, second) MakeNewNode((int32_t)(SUB_OP), 0, TYPE_OP, first, second)
-#define LOG(first, second) MakeNewNode((int32_t)(LOG_OP), 0, TYPE_OP, first, second)
-#define POW(first, second) MakeNewNode((int32_t)(POW_OP), 0, TYPE_OP, first, second)
+#define MUL(first, second) MakeNewNode((int32_t)(MUL_OP), 0, 0, TYPE_OP, first, second)
+#define DIV(first, second) MakeNewNode((int32_t)(DIV_OP), 0, 0, TYPE_OP, first, second)
+#define ADD(first, second) MakeNewNode((int32_t)(ADD_OP), 0, 0, TYPE_OP, first, second)
+#define SUB(first, second) MakeNewNode((int32_t)(SUB_OP), 0, 0, TYPE_OP, first, second)
+#define LOG(first, second) MakeNewNode((int32_t)(LOG_OP), 0, 0, TYPE_OP, first, second)
+#define POW(first, second) MakeNewNode((int32_t)(POW_OP), 0, 0, TYPE_OP, first, second)
 
-#define SIN(smth)          MakeNewNode((int32_t)SIN_OP, 0, TYPE_UNO, nullptr, smth)
-#define COS(smth)          MakeNewNode((int32_t)COS_OP, 0, TYPE_UNO, nullptr, smth)
+#define SIN(smth)          MakeNewNode((int32_t)SIN_OP, 0, 0, TYPE_UNO, nullptr, smth)
+#define COS(smth)          MakeNewNode((int32_t)COS_OP, 0, 0, TYPE_UNO, nullptr, smth)
 
-#define CONST_NODE(smth)   MakeNewNode(smth, 0, TYPE_CONST, nullptr, nullptr)
-#define VAR_NODE(smth)     MakeNewNode(0, smth, TYPE_VAR, nullptr, nullptr)     
+#define CONST_NODE(smth)   MakeNewNode(0, smth, 0, TYPE_CONST, nullptr, nullptr)
+#define VAR_NODE(smth)     MakeNewNode(0, 0, smth, TYPE_VAR, nullptr, nullptr)     
 
 Node* Differentiate (Node* root) {
     assert(root        != nullptr);
@@ -339,14 +209,14 @@ Node* Copy (Node* root) {
 
     if ((root->left  != nullptr) &&
         (root->right != nullptr)) {
-        return MakeNewNode(root->data.number, root->data.expression, root->type, Copy(root->left), Copy(root->right));
+        return MakeNewNode(root->data.operation, root->data.number, root->data.expression, root->type, Copy(root->left), Copy(root->right));
     }
     else if ((root->left == nullptr) &&
              (root->right != nullptr)) {
-        return MakeNewNode(root->data.number, root->data.expression, root->type, 0, Copy(root->right));
+        return MakeNewNode(root->data.operation, root->data.number, root->data.expression, root->type, 0, Copy(root->right));
     }
     else {
-        return MakeNewNode(root->data.number, root->data.expression, root->type, nullptr, nullptr);
+        return MakeNewNode(root->data.operation, root->data.number, root->data.expression, root->type, nullptr, nullptr);
     }
 
     return nullptr;
@@ -384,14 +254,9 @@ int32_t FoldConst(Node* node) {
                 node->type = TYPE_CONST;
                 break;
             case (int32_t)(DIV_OP):
-                if ((node->left->data.number % node->right->data.number) == 0) {
-                    node->data.number = node->left->data.number / node->right->data.number;
-                    node->type = TYPE_CONST;
-                    break;
-                }
-                else {
-                    goto elseSection;
-                }
+                node->data.number = node->left->data.number / node->right->data.number;
+                node->type = TYPE_CONST;
+                break;
             case (int32_t)(POW_OP):
                 if (node->right->data.number > 0) {
                     node->data.number = (int32_t)pow(node->left->data.number, node->right->data.number);
@@ -405,7 +270,7 @@ int32_t FoldConst(Node* node) {
             }
         }
         else if (((node->data.operation) == LOG_OP) &&
-                (node->left->type == node->right->type) && (node->left->data.number == node->right->data.number) &&
+                (node->left->type == node->right->type) && CheckDoubleEquality(node->left->data.number, node->right->data.number) &&
                 ((node->left->type == TYPE_CONST) || (node->left->type == TYPE_VAR))) {
             node->data.number = 1;
             node->type = TYPE_CONST;
@@ -413,7 +278,7 @@ int32_t FoldConst(Node* node) {
         else if (((node->type) == TYPE_OP) &&
                  (node->left->type  == TYPE_VAR)    &&
                  (node->right->type == TYPE_CONST)  &&
-                 (node->right->data.number == 0)) {
+                 CheckDoubleEquality(node->right->data.number, 0)) {
             switch (node->data.operation) {
                 case POW_OP:
                     node->data.number = 1;
@@ -424,7 +289,7 @@ int32_t FoldConst(Node* node) {
             }
         }
         else if ((node->type       == TYPE_UNO) &&
-                (node->right->data.number == 0)) {
+                CheckDoubleEquality(node->right->data.number, 0)) {
             switch (node->data.operation) {
             case SIN_OP:
                 node->data.number = 0;
@@ -461,7 +326,7 @@ int32_t FoldConst(Node* node) {
 
 #define CUT_EQUAL_NODES(direction1, direction2, value)                          \
     if ((context.node-> direction1 ->type == TYPE_CONST) &&                     \
-        (context.node-> direction1 ->data.number == value)) {                    \
+        (CheckDoubleEquality(context.node-> direction1 ->data.number, value))) {    \
         if (*context.prevNode == context.node) {                                \
             Node* saveNode = *context.prevNode;                                 \
             *context.prevNode = context.node-> direction2;                      \
@@ -530,7 +395,7 @@ int32_t CutEqualNodes(Context context) {
 
 #define CUT_NULL_NODES(direction1, direction2, value)                           \
     if ((context.node-> direction1 ->type == TYPE_CONST) &&                     \
-        (context.node-> direction1 ->data.number == value)) {                          \
+        CheckDoubleEquality(context.node-> direction1 ->data.number,value)) {   \
         if (*context.prevNode == context.node) {                                \
             Node* saveNode = *context.prevNode;                                 \
             *context.prevNode = context.node-> direction1;                      \
@@ -565,7 +430,7 @@ int32_t CutNullNodes(Context context) {
         }
         else if (context.node->data.operation == (int32_t)DIV_OP) {
             CUT_NULL_NODES(left, right, 0)
-            if (!context.node->right->data.number) {
+            if (CheckDoubleEquality(context.node->right->data.number, 0)) {
                 assert(FAIL && "ZERO DIVISION ERROR");
             }
         }
@@ -587,13 +452,14 @@ int32_t CutNullNodes(Context context) {
 
 #undef CUT_NULL_NODES
 #define CUT_MINUS_ONE_NODES(operator, value, swapping)                              \
-    if ((node->data.operation == (int32_t)operator) && (node->left->data.number == value)) {         \
-        node->data.operation = (int32_t)swapping;                                             \
+    if ((node->data.operation == (int32_t)operator) &&                              \
+        CheckDoubleEquality(node->left->data.number, value)) {                      \
+        node->data.operation = (int32_t)swapping;                                   \
         NodeDtor(node->left);                                                       \
                                                                                     \
         node->left          = Copy(node->right);                                    \
                                                                                     \
-        node->right->data.number   = -1;                                                   \
+        node->right->data.number   = -1;                                            \
         node->right->left   = nullptr;                                              \
         node->right->right  = nullptr;                                              \
         node->right->type   = TYPE_CONST;                                           \
@@ -676,4 +542,16 @@ FILE* StartTex(Tree* tree, char** outputName, DiffContext* diffContext) {
     PrintBigNodes(output, diffContext);
 
     return output;
+}
+
+bool CheckDoubleEquality(double first, double second) {
+    assert(first  != NAN);
+    assert(second != NAN);
+
+    if ((first + __DBL_EPSILON__ >= second) &&
+        (first - __DBL_EPSILON__ <= second)) {
+        return 1;
+    }
+
+    return 0;
 }

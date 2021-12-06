@@ -80,7 +80,7 @@ enum Operators {
 };
 
 union Data {
-    int32_t number;
+    double number;
     int8_t  operation;
     int8_t* expression;
 };
@@ -132,7 +132,7 @@ void TreeCtor_(Tree* tree);
 void TreeDtor(Tree* tree);
 void NodeDtor(Node* root);
 
-Node* MakeNewNode(int32_t number, int8_t* expression, NodeDataTypes type, Node* left, Node* right);
+Node* MakeNewNode(int8_t operation, double number, int8_t* expression, NodeDataTypes type, Node* left, Node* right);
 
 void PrintTreeNodes(Tree* tree, Node* root, FILE* output = stdout);
 bool VerifyTree(Node* root);
