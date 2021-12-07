@@ -64,7 +64,7 @@ enum Operators {
     POW_OP   = '^',
     NON_OP   = '!',
     L_OP     = '<',
-    LEQ_OP,
+    LEQ_OP   = 120,
     G_OP     = '>',
     GEQ_OP,
     EQ_OP    = '=',

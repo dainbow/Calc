@@ -8,6 +8,7 @@
 const char ASM_NAME[] = "asm";
 const char ASM_PATH[] = "out/";
 const char ASM_OUTPUT_FORMAT[] = ".ass";
+const char ASM_REVERSED_FORMAT[] = ".reversed";
 
 const int32_t VAR_BEGINNING                = 100;
 
@@ -96,3 +97,13 @@ void ProcessGobble(Node* AST, FILE* output, CodegenContext* context);
 int32_t FindString(int8_t* name, CodegenContext* context);
 
 void PrintEndOfProgram(FILE* output, CodegenContext* context);
+
+void FrontendMinusOne(Tree* AST);
+void PrintAST(Node* node, FILE* output);
+
+int32_t GetOperationPriority(int8_t operation);
+
+void PrintOperationMinus1(Node* node, FILE* output);
+void PrintFunction(Node* node, FILE* output);
+void PrintKeyword(Node* node, FILE* output);
+void PrintString(Node* node, FILE* output);

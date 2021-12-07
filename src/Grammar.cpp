@@ -18,8 +18,6 @@ Node* GetG(Node** pointer) {
 
     Node* retValue = GetExternal(pointer);
     
-    printf("type is %d; operation is %c\n", (**pointer).type, (**pointer).data.operation);
-
     return retValue;
 }
 
@@ -78,17 +76,6 @@ Node* GetF(Node** pointer) {
         Node* bottom = retValue->right;
 
         while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
-            switch ((**pointer).type) {
-                case TYPE_STR:
-                case TYPE_VAR:
-                case TYPE_FUNC:
-                    printf("GetF looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-                    break;
-                default:
-                    printf("GetF looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-                    break;
-            }
-
             bottom->right = GetK(pointer);
             bottom = bottom->right;
         }
@@ -103,16 +90,6 @@ Node* GetF(Node** pointer) {
         (*pointer)++;
     }
     else {
-        switch ((**pointer).type) {
-                case TYPE_STR:
-                case TYPE_VAR:
-                case TYPE_FUNC:
-                    printf("GetP looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-                    break;
-                default:
-                    printf("GetP looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-                    break;
-            }
         assert("SYNTAX ERROR, EOF NOT FOUND");
     }
 
@@ -183,7 +160,6 @@ Node* GetK(Node** pointer) {
         case KEY_RETURN:
             (*pointer)++;
             retValue->left = GetS(pointer);
-            printf("EXIT FROM SPIT\n");
             return retValue;
 
             break;
@@ -243,16 +219,6 @@ Node* GetK(Node** pointer) {
         (*pointer)++;
     }
     else {
-        switch ((**pointer).type) {
-        case TYPE_VAR:
-        case TYPE_FUNC:
-            printf("GetK looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-            break;
-        default:
-            printf("GetK looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-            break;
-        }
-
         assert(FAIL && "BEGIN AFTER KEYWORD EXPRESSION NOT FOUND");
     }
 
@@ -297,16 +263,6 @@ Node* GetS(Node** pointer) {
 
     Node* retValue       = 0;
 
-    switch ((**pointer).type) {
-        case TYPE_VAR:
-        case TYPE_FUNC:
-            printf("GetS looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-            break;
-        default:
-            printf("GetS looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-            break;
-    }
-
     if (((**pointer).type == TYPE_VAR) &&
         ((*(*pointer + 1)).type == TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_IN)) {
         retValue       = *pointer + 1;
@@ -340,16 +296,6 @@ Node* GetS(Node** pointer) {
         (*pointer)++;
     }
     else {
-        switch ((**pointer).type) {
-            case TYPE_VAR:
-            case TYPE_FUNC:
-                printf("Error while looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-                break;
-            default:
-                printf("Error while looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-                break;
-        }
-
         assert(FAIL && "SYNTAX ERROR, EOL NOT FOUND");
     }
 
@@ -438,17 +384,6 @@ Node* GetP(Node** pointer) {
 
     Node* retValue = nullptr;
     Node* bottom = nullptr;
-
-    switch ((**pointer).type) {
-                case TYPE_STR:
-                case TYPE_VAR:
-                case TYPE_FUNC:
-                    printf("GetP looking at %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-                    break;
-                default:
-                    printf("GetP looking at %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-                    break;
-            }
 
     while ((**pointer).type == TYPE_OP) {
         if ((**pointer).data.operation == SUB_OP) {
@@ -548,16 +483,6 @@ Node* GetN(Node** pointer) {
     (*pointer)++;
 
     if ((*retValue).type != TYPE_CONST) {
-        switch ((**pointer).type) {
-        case TYPE_VAR:
-        case TYPE_FUNC:
-            printf("CAN'T EAT %s with type %d\n", (**pointer).data.expression, (**pointer).type);
-            break;
-        default:
-            printf("CAN'T EAT %c[%lf] with type %d\n", (**pointer).data.operation, (**pointer).data.number, (**pointer).type);
-            break;
-        }
-        
         assert(FAIL && "INVALID RETURN FOR GET N FUNCTION");
     } 
 
@@ -602,8 +527,6 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
         
             int8_t keywordNum = 0;
             if ((keywordNum = IsKeyword(bufferRemember, keywords))) {
-                printf("FOUND %d in %s\n", keywordNum, bufferRemember);
-
                 tokens->array[tokensCounter].type            = TYPE_KEYWORD;
                 tokens->array[tokensCounter].data.operation  = keywordNum;
 
@@ -657,8 +580,6 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
         }
         else if (*curChar == '\"') {
             int8_t* bufferRemember = tokens->database + databaseCounter;
-            printf("FOUND STRING\n");
-
             curChar++;
 
             while (*curChar != '\"') {

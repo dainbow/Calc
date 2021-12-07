@@ -3,6 +3,16 @@ pi in 3 $
 main begin
 a in 0 $
 
+vasyaSniff a == 0 begin
+	cry a dot
+lilEnd
+nextSniff a > 0 begin
+	cry a + 228 dot
+lilEnd
+someoneSniff begin
+	cry a - 3 dot
+lilEnd
+
 hire eblan from 2.5 to 5 with 1.5 begin
 	a in a + eblan $
 	cry "a is", a dot

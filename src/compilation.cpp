@@ -19,10 +19,7 @@ ProcStackElem FindLabelByName(int8_t lblName[], Labels* labels) {
     assert(labels  != nullptr);
 
     for (uint32_t curLbl = 0; (labels->array[curLbl].go != -1) && (curLbl < MAX_LABEL_AMOUNT); curLbl++) {
-        printf("Comparing labels: %s and %s\n", lblName, labels->array[curLbl].name);
         if (strcmp((const char*)lblName, (const char*)labels->array[curLbl].name) == 0) {
-            printf("Label %s goes to %lld ip\n", lblName, labels->array[curLbl].go);
-
             return (ProcStackElem)labels->array[curLbl].go;
         }
     }
@@ -83,8 +80,6 @@ void EmitArgs(int32_t cmdNum, CompileResult* output, Arguments* comArgs, Labels*
             labels->array[labels->curLbl].name = (int8_t*)comArgs->labelName;
             labels->array[labels->curLbl].go   = output->bytesCount;
             labels->curLbl++;
-
-            printf("%u label name is \"%s\"\n", labels->curLbl, labels->array[labels->curLbl - 1].name);
         }                                                                                                            
     }                                                                                                                                           
 

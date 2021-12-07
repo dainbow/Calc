@@ -42,6 +42,7 @@ Node* GetP(Node** pointer);
 Node* GetN(Node** pointer);
 Node* GetV(Node** pointer);
 Node* GetStr(Node** pointer);
+Node* GetD(Node** pointer);
 
 Node* GetS(Node** pointer);
 Node* GetF(Node** pointer);
