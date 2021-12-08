@@ -72,31 +72,31 @@ int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
     int8_t buffer[MAX_TRASH_SIZE]      = "";
     
     if (sscanf((const char*)rawData, " %d", &convertedData)) {
-        *type = TYPE_CONST;
+        *type = NodeDataTypes::TYPE_CONST;
 
         return convertedData;
     }
     else if (sscanf((const char*)rawData, " %1[sc]", buffer)) {
         convertedData = buffer[0];
-        *type = TYPE_UNO;
+        *type = NodeDataTypes::TYPE_UNO;
 
         return convertedData;
     }
     else if (sscanf((const char*)rawData, " %1[+-*/^l]", buffer)) {
         convertedData = buffer[0];
-        *type = TYPE_OP;
+        *type = NodeDataTypes::TYPE_OP;
 
         return convertedData;
     }
     else if (sscanf((const char*)rawData, " %1[a-zA-Z]", buffer)) {
         convertedData = buffer[0];
-        *type = TYPE_VAR;
+        *type = NodeDataTypes::TYPE_VAR;
 
         return convertedData;
     }
     else if (sscanf((const char*)rawData, " %1[()]", buffer)) {
         convertedData = buffer[0];
-        *type = TYPE_UNKNOWN;
+        *type = NodeDataTypes::TYPE_UNKNOWN;
 
         return convertedData;
     }
@@ -115,18 +115,18 @@ int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
 #define C(smth) Copy(smth)
 #define F(smth) MakeFactor(smth)
 
-#define MUL(first, second) MakeNewNode((int32_t)(MUL_OP), 0, 0, TYPE_OP, first, second)
-#define DIV(first, second) MakeNewNode((int32_t)(DIV_OP), 0, 0, TYPE_OP, first, second)
-#define ADD(first, second) MakeNewNode((int32_t)(ADD_OP), 0, 0, TYPE_OP, first, second)
-#define SUB(first, second) MakeNewNode((int32_t)(SUB_OP), 0, 0, TYPE_OP, first, second)
-#define LOG(first, second) MakeNewNode((int32_t)(LOG_OP), 0, 0, TYPE_OP, first, second)
-#define POW(first, second) MakeNewNode((int32_t)(POW_OP), 0, 0, TYPE_OP, first, second)
+#define MUL(first, second) MakeNewNode((int32_t)(MUL_OP), 0, 0, NodeDataTypes::TYPE_OP, first, second)
+#define DIV(first, second) MakeNewNode((int32_t)(DIV_OP), 0, 0, NodeDataTypes::TYPE_OP, first, second)
+#define ADD(first, second) MakeNewNode((int32_t)(ADD_OP), 0, 0, NodeDataTypes::TYPE_OP, first, second)
+#define SUB(first, second) MakeNewNode((int32_t)(SUB_OP), 0, 0, NodeDataTypes::TYPE_OP, first, second)
+#define LOG(first, second) MakeNewNode((int32_t)(LOG_OP), 0, 0, NodeDataTypes::TYPE_OP, first, second)
+#define POW(first, second) MakeNewNode((int32_t)(POW_OP), 0, 0, NodeDataTypes::TYPE_OP, first, second)
 
-#define SIN(smth)          MakeNewNode((int32_t)SIN_OP, 0, 0, TYPE_UNO, nullptr, smth)
-#define COS(smth)          MakeNewNode((int32_t)COS_OP, 0, 0, TYPE_UNO, nullptr, smth)
+#define SIN(smth)          MakeNewNode((int32_t)SIN_OP, 0, 0, NodeDataTypes::TYPE_UNO, nullptr, smth)
+#define COS(smth)          MakeNewNode((int32_t)COS_OP, 0, 0, NodeDataTypes::TYPE_UNO, nullptr, smth)
 
-#define CONST_NODE(smth)   MakeNewNode(0, smth, 0, TYPE_CONST, nullptr, nullptr)
-#define VAR_NODE(smth)     MakeNewNode(0, 0, smth, TYPE_VAR, nullptr, nullptr)     
+#define CONST_NODE(smth)   MakeNewNode(0, smth, 0, NodeDataTypes::TYPE_CONST, nullptr, nullptr)
+#define VAR_NODE(smth)     MakeNewNode(0, 0, smth, NodeDataTypes::TYPE_VAR, nullptr, nullptr)     
 
 Node* Differentiate (Node* root) {
     assert(root        != nullptr);
@@ -134,16 +134,16 @@ Node* Differentiate (Node* root) {
     Node* returningRoot = nullptr;
 
     switch (root->type) {
-    case TYPE_VAR:
+    case NodeDataTypes::TYPE_VAR:
         if (!strcmp((const char*)root->data.expression, "e"))
             returningRoot = VAR_NODE(root->data.expression);
         else 
             returningRoot = CONST_NODE(1);
         break;
-    case TYPE_CONST:
+    case NodeDataTypes::TYPE_CONST:
         returningRoot = CONST_NODE(0);
         break;
-    case TYPE_OP:
+    case NodeDataTypes::TYPE_OP:
         switch (root->data.operation) {
             case (int32_t)(SUB_OP):
                 returningRoot = SUB(D(L), D(R));
@@ -182,7 +182,7 @@ Node* Differentiate (Node* root) {
                 assert(FAIL && "INVALID OPERATION");
         }
         break;
-    case TYPE_UNO:
+    case NodeDataTypes::TYPE_UNO:
         switch (root->data.operation) {
         case SIN_OP: 
             returningRoot = MUL(COS(C(R)), D(R));
@@ -196,12 +196,12 @@ Node* Differentiate (Node* root) {
             break;
         }
         break;
-    case TYPE_FUNC:
-    case TYPE_STR:
-    case TYPE_KEYWORD:
+    case NodeDataTypes::TYPE_FUNC:
+    case NodeDataTypes::TYPE_STR:
+    case NodeDataTypes::TYPE_KEYWORD:
         assert(FAIL && "SYNTAX ERROR, DIFFER CAN'T PROCESS THESE TYPES");
         break;
-    case TYPE_UNKNOWN:
+    case NodeDataTypes::TYPE_UNKNOWN:
     default:
         assert(FAIL && "UNKNOWN DATA TYPE");
     }
@@ -240,32 +240,32 @@ int32_t FoldConst(Node* node) {
     assert(node != nullptr);
     int32_t returnValue = 0;
 
-    if ((node->type == TYPE_OP) || (node->type == TYPE_UNO)) {
-        if  (((node->type) == TYPE_OP)        &&
+    if ((node->type == NodeDataTypes::TYPE_OP) || (node->type == NodeDataTypes::TYPE_UNO)) {
+        if  (((node->type) == NodeDataTypes::TYPE_OP)        &&
             ((node->data.operation) != LOG_OP)             &&
-            (node->left->type  == TYPE_CONST) &&
-            (node->right->type == TYPE_CONST)) {
+            (node->left->type  == NodeDataTypes::TYPE_CONST) &&
+            (node->right->type == NodeDataTypes::TYPE_CONST)) {
         switch (node->data.operation) {
             case (int32_t)(ADD_OP):
                 node->data.number = node->left->data.number + node->right->data.number;
-                node->type = TYPE_CONST;
+                node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case (int32_t)(SUB_OP):
                 node->data.number = node->left->data.number - node->right->data.number;
-                node->type = TYPE_CONST;
+                node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case (int32_t)(MUL_OP):
                 node->data.number = node->left->data.number * node->right->data.number;
-                node->type = TYPE_CONST;
+                node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case (int32_t)(DIV_OP):
                 node->data.number = node->left->data.number / node->right->data.number;
-                node->type = TYPE_CONST;
+                node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case (int32_t)(POW_OP):
                 if (node->right->data.number > 0) {
                     node->data.number = (int32_t)pow(node->left->data.number, node->right->data.number);
-                    node->type = TYPE_CONST;
+                    node->type = NodeDataTypes::TYPE_CONST;
                     break;
                 }
                 else 
@@ -276,33 +276,33 @@ int32_t FoldConst(Node* node) {
         }
         else if (((node->data.operation) == LOG_OP) &&
                 (node->left->type == node->right->type) && CheckDoubleEquality(node->left->data.number, node->right->data.number) &&
-                ((node->left->type == TYPE_CONST) || (node->left->type == TYPE_VAR))) {
+                ((node->left->type == NodeDataTypes::TYPE_CONST) || (node->left->type == NodeDataTypes::TYPE_VAR))) {
             node->data.number = 1;
-            node->type = TYPE_CONST;
+            node->type = NodeDataTypes::TYPE_CONST;
         }
-        else if (((node->type) == TYPE_OP) &&
-                 (node->left->type  == TYPE_VAR)    &&
-                 (node->right->type == TYPE_CONST)  &&
+        else if (((node->type) == NodeDataTypes::TYPE_OP) &&
+                 (node->left->type  == NodeDataTypes::TYPE_VAR)    &&
+                 (node->right->type == NodeDataTypes::TYPE_CONST)  &&
                  CheckDoubleEquality(node->right->data.number, 0)) {
             switch (node->data.operation) {
                 case POW_OP:
                     node->data.number = 1;
-                    node->type = TYPE_CONST;
+                    node->type = NodeDataTypes::TYPE_CONST;
                     break;
                 default:
                     goto elseSection;
             }
         }
-        else if ((node->type       == TYPE_UNO) &&
+        else if ((node->type       == NodeDataTypes::TYPE_UNO) &&
                 CheckDoubleEquality(node->right->data.number, 0)) {
             switch (node->data.operation) {
             case SIN_OP:
                 node->data.number = 0;
-                node->type = TYPE_CONST;
+                node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case COS_OP:
                 node->data.number = 1;
-                node->type = TYPE_CONST;
+                node->type = NodeDataTypes::TYPE_CONST;
                 break;
             default:
                 break;
@@ -330,7 +330,7 @@ int32_t FoldConst(Node* node) {
 }
 
 #define CUT_EQUAL_NODES(direction1, direction2, value)                          \
-    if ((context.node-> direction1 ->type == TYPE_CONST) &&                     \
+    if ((context.node-> direction1 ->type == NodeDataTypes::TYPE_CONST) &&                     \
         (CheckDoubleEquality(context.node-> direction1 ->data.number, value))) {    \
         if (*context.prevNode == context.node) {                                \
             Node* saveNode = *context.prevNode;                                 \
@@ -354,7 +354,7 @@ int32_t FoldConst(Node* node) {
     }
 
 #define NEXT_CUT_FUNC_ITERATION(direction, function)                \
-    if (context.node-> direction ->type == TYPE_OP) {               \
+    if (context.node-> direction ->type == NodeDataTypes::TYPE_OP) {               \
         Context next = {context.node->direction, &context.node};    \
                                                                     \
         returnValue += function (next);                             \
@@ -385,11 +385,11 @@ int32_t CutEqualNodes(Context context) {
         CUT_EQUAL_NODES(left, right, 1)
     }
 
-    if (context.node->type == TYPE_OP) {
+    if (context.node->type == NodeDataTypes::TYPE_OP) {
         NEXT_CUT_FUNC_ITERATION(left,  CutEqualNodes)
         NEXT_CUT_FUNC_ITERATION(right, CutEqualNodes)
     }
-    else if (context.node->type == TYPE_UNO) {
+    else if (context.node->type == NodeDataTypes::TYPE_UNO) {
         NEXT_CUT_FUNC_ITERATION(right, CutEqualNodes)
     }
     
@@ -399,7 +399,7 @@ int32_t CutEqualNodes(Context context) {
 #undef CUT_EQUAL_NODES
 
 #define CUT_NULL_NODES(direction1, direction2, value)                           \
-    if ((context.node-> direction1 ->type == TYPE_CONST) &&                     \
+    if ((context.node-> direction1 ->type == NodeDataTypes::TYPE_CONST) &&                     \
         CheckDoubleEquality(context.node-> direction1 ->data.number,value)) {   \
         if (*context.prevNode == context.node) {                                \
             Node* saveNode = *context.prevNode;                                 \
@@ -425,7 +425,7 @@ int32_t CutEqualNodes(Context context) {
 int32_t CutNullNodes(Context context) {
     int32_t returnValue = 0;
 
-    if (context.node->type == TYPE_OP) {
+    if (context.node->type == NodeDataTypes::TYPE_OP) {
         if (context.node->data.operation == (int32_t)MUL_OP) {
             CUT_NULL_NODES(left, right, 0)
             CUT_NULL_NODES(right, left, 0)
@@ -444,11 +444,11 @@ int32_t CutNullNodes(Context context) {
         }
     }
 
-    if (context.node->type == TYPE_OP) {
+    if (context.node->type == NodeDataTypes::TYPE_OP) {
         NEXT_CUT_FUNC_ITERATION(left,  CutNullNodes)
         NEXT_CUT_FUNC_ITERATION(right, CutNullNodes)
     }
-    else if (context.node->type == TYPE_UNO) {
+    else if (context.node->type == NodeDataTypes::TYPE_UNO) {
         NEXT_CUT_FUNC_ITERATION(right, CutNullNodes)
     }
     
@@ -467,30 +467,30 @@ int32_t CutNullNodes(Context context) {
         node->right->data.number   = -1;                                            \
         node->right->left   = nullptr;                                              \
         node->right->right  = nullptr;                                              \
-        node->right->type   = TYPE_CONST;                                           \
+        node->right->type   = NodeDataTypes::TYPE_CONST;                                           \
     }                                           
 
 
 int32_t CutMinusOneNodes(Node* node) {
     int32_t returnValue = 0;
 
-    if ((node->type == TYPE_OP) &&
-        (node->left->type  == TYPE_CONST)) {
+    if ((node->type == NodeDataTypes::TYPE_OP) &&
+        (node->left->type  == NodeDataTypes::TYPE_CONST)) {
         CUT_MINUS_ONE_NODES(DIV_OP, 1, POW_OP)
         CUT_MINUS_ONE_NODES(SUB_OP, 0, MUL_OP)
     }
 
-    if (node->type == TYPE_OP) {
-        if (node->left->type  == TYPE_OP) {
+    if (node->type == NodeDataTypes::TYPE_OP) {
+        if (node->left->type  == NodeDataTypes::TYPE_OP) {
             returnValue += CutMinusOneNodes(node->left);
         }
-        if (node->right->type == TYPE_OP) {
+        if (node->right->type == NodeDataTypes::TYPE_OP) {
             returnValue += CutMinusOneNodes(node->right);
         }
     }
-    else if (node->type == TYPE_UNO) {
-        if ((node->right->type == TYPE_OP) ||
-            (node->right->type == TYPE_UNO)) {
+    else if (node->type == NodeDataTypes::TYPE_UNO) {
+        if ((node->right->type == NodeDataTypes::TYPE_OP) ||
+            (node->right->type == NodeDataTypes::TYPE_UNO)) {
             returnValue += CutMinusOneNodes(node->right);
         }
     }
@@ -504,7 +504,7 @@ int32_t CheckForVars(Node* node) {
     assert(node != nullptr);
     int32_t returnValue = 0;
 
-    if ((node->type == TYPE_VAR) &&
+    if ((node->type == NodeDataTypes::TYPE_VAR) &&
         (strcmp((const char*)node->data.expression, (const char*)E_CONST))) {
         returnValue++;
     }

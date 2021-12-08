@@ -7,8 +7,9 @@
 
 const char ASM_NAME[] = "asm";
 const char ASM_PATH[] = "out/";
-const char ASM_OUTPUT_FORMAT[] = ".ass";
-const char ASM_REVERSED_FORMAT[] = ".reversed";
+const char ASM_OUTPUT_FORMAT[]      = ".ass";
+const char TREE_OUTPUT_FORMAT[]     = ".notree";
+const char ASM_REVERSED_FORMAT[]    = ".reversed";
 
 const int32_t VAR_BEGINNING                = 100;
 

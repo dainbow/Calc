@@ -30,7 +30,7 @@ void NodeDtor(Node* root) {
     if (root->right != nullptr) NodeDtor(root->right);
 
     root->data.number  = 13;
-    root->type  = TYPE_UNKNOWN;
+    root->type  = NodeDataTypes::TYPE_UNKNOWN;
     root->left  = (Node*)13;
     root->right = (Node*)13;
     free(root);
@@ -39,26 +39,27 @@ void NodeDtor(Node* root) {
 Node* MakeNewNode(int8_t operation, double number, int8_t* expression, NodeDataTypes type, Node* left, Node* right) {
     Node* newNode = (Node*)calloc(1, sizeof(newNode[0]));
 
-    uint32_t nodeWeight = 1;
-
-    if (left != nullptr) {
-        nodeWeight += left->weight;
+    switch (type) {
+        case NodeDataTypes::TYPE_CONST:
+            newNode->data.number = number;
+            break;
+        case NodeDataTypes::TYPE_KEYWORD:
+        case NodeDataTypes::TYPE_OP:
+        case NodeDataTypes::TYPE_UNO:
+            newNode->data.operation = operation;
+            break;
+        case NodeDataTypes::TYPE_FUNC:
+        case NodeDataTypes::TYPE_STR:
+        case NodeDataTypes::TYPE_VAR:    
+            newNode->data.expression = expression;
+            break;
+        case NodeDataTypes::TYPE_UNKNOWN:
+        default:
+            assert(FAIL && "UNKNOWN DATA TYPE");
+            break;
     }
-    if (right != nullptr) {
-        nodeWeight += right->weight;
-    }
-
-    if (type == TYPE_VAR) {
-        newNode->data.expression = expression;
-    }
-    else if (type == TYPE_CONST) {
-        newNode->data.number = number;
-    }
-    else {
-        newNode->data.operation = operation;
-    }
+    
     newNode->type   =  type;
-    newNode->weight = nodeWeight; 
     newNode->left   = left; 
     newNode->right  = right;
 
@@ -74,7 +75,6 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
     static Node* pointerAnchor = root;
 
     if (root == tree->root) {
-        printf("Dropped\n");
         curRecursionDepth = 1;
         curNodeNumber     = 0;
         pointerAnchor     = root;
@@ -86,11 +86,13 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
 
     char nodeData[MAX_NODE_DATA_LENGTH] = "";
 
+    printf("Printing %p node with %p left and %p right, expression is %p\n", root, root->left, root->right, root->data.expression);
+
     switch (root->type) {
-    case TYPE_CONST:
+    case NodeDataTypes::TYPE_CONST:
         sprintf(nodeData, "%lf", root->data.number);
         break;
-    case TYPE_OP:
+    case NodeDataTypes::TYPE_OP:
         if (root->data.operation == 'l') {
             strcat(nodeData, "log");
         }
@@ -115,7 +117,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             }
         }
         break;
-    case TYPE_KEYWORD:
+    case NodeDataTypes::TYPE_KEYWORD:
         switch(root->data.operation) {
             case KEY_IN:
                 strcat(nodeData, "in");
@@ -168,15 +170,15 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
                 break; 
         }
         break;
-    case TYPE_FUNC:
+    case NodeDataTypes::TYPE_FUNC:
         strcat(nodeData, (const char*)root->data.expression);
         strcat(nodeData, "()");
         break;
-    case TYPE_STR:
-    case TYPE_VAR:
+    case NodeDataTypes::TYPE_STR:
+    case NodeDataTypes::TYPE_VAR:
         strcat(nodeData, (const char*)root->data.expression);
         break;
-    case TYPE_UNO:
+    case NodeDataTypes::TYPE_UNO:
         switch (root->data.operation) {
             case (int32_t)'s':
                 strcat(nodeData, "sin");
@@ -193,7 +195,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
                 break;
         }
         break;
-    case TYPE_UNKNOWN:
+    case NodeDataTypes::TYPE_UNKNOWN:
         assert(FAIL && "UNKNOWN OPERAND TYPE");
         break;
     default:

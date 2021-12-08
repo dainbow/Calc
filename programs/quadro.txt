@@ -1,5 +1,5 @@
 CalculateD with a, b, c begin
-	b in diff (b^3)/3 $
+	b in diff b^3/3 $
 	spit b - 4*a*c $
 lilEnd
 

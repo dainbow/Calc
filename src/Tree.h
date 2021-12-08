@@ -24,7 +24,7 @@ typedef int32_t TreeElem;
     #define RIGHT_BRANCH_VALUE curNodeNumber
 #endif
 
-enum NodeDataTypes {
+enum class NodeDataTypes: int8_t {
     TYPE_UNKNOWN = 0,
     TYPE_CONST   = 1,
     TYPE_OP      = 2,
@@ -86,10 +86,9 @@ union Data {
 };
 
 struct Node {
+    NodeDataTypes type;
     Data data;
-    NodeDataTypes type; 
 
-    uint32_t weight;
     Node* left;
     Node* right;
 };

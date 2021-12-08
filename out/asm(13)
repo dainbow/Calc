@@ -1,0 +1,138 @@
+call main
+hlt
+fact:
+pop {bx + 0}
+push {bx + 0}
+push 1.000000
+push 1
+add
+sub
+push 0
+jb compareg0
+push 0
+jump comparezero0
+compareg0:
+push 1
+comparezero0:
+push 0
+je ifelse0
+push 1.000000
+ret
+jump ifend0
+ifelse0:
+push {bx + 0}
+push {bx + 0}
+push 1.000000
+sub
+push 4
+push bx
+add
+pop bx
+call fact
+push bx
+push 4
+sub
+pop bx
+mul
+ret
+ifend0:
+ret
+main:
+strout str0
+in {bx + 0}
+push {bx + 0}
+push 8
+push bx
+add
+pop bx
+call fact
+push bx
+push 8
+sub
+pop bx
+pop {bx + 4}
+strout str1
+push {bx + 0}
+out 1
+strout str2
+push {bx + 4}
+out 1
+ret
+str0:
+db Please enter n to calc n!
+
+str1:
+db Factorial of
+
+str2:
+db is
+
+call main
+hlt
+fact:
+pop {bx + 0}
+push {bx + 0}
+push 1.000000
+push 1
+add
+sub
+push 0
+jb compareg0
+push 0
+jump comparezero0
+compareg0:
+push 1
+comparezero0:
+push 0
+je ifelse0
+push 1.000000
+ret
+jump ifend0
+ifelse0:
+push {bx + 0}
+push {bx + 0}
+push 1.000000
+sub
+push 4
+push bx
+add
+pop bx
+call fact
+push bx
+push 4
+sub
+pop bx
+mul
+ret
+ifend0:
+ret
+main:
+strout str0
+in {bx + 0}
+push {bx + 0}
+push 8
+push bx
+add
+pop bx
+call fact
+push bx
+push 8
+sub
+pop bx
+pop {bx + 4}
+strout str1
+push {bx + 0}
+out 1
+strout str2
+push {bx + 4}
+out 1
+ret
+str0:
+db Please enter n to calc n!
+
+str1:
+db Factorial of
+
+str2:
+db is
+

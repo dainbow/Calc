@@ -6,7 +6,7 @@ void MakeAST(Tree* AST, Tokens* tokens) {
     AST->root = GetG(&tokens->array);
     Node* bottom = AST->root;
 
-    while((tokens->array->type != TYPE_KEYWORD) || (tokens->array->data.operation != KEY_END)) {
+    while((tokens->array->type != NodeDataTypes::TYPE_KEYWORD) || (tokens->array->data.operation != KEY_END)) {
         bottom->right = GetG(&tokens->array);
         bottom = bottom->right;
     }
@@ -27,7 +27,7 @@ Node* GetExternal(Node** pointer) {
 
     Node* retValue = 0;
 
-    if (((*pointer + 1)->type == TYPE_KEYWORD) && 
+    if (((*pointer + 1)->type == NodeDataTypes::TYPE_KEYWORD) && 
         (((*pointer + 1)->data.operation == KEY_WITH) ||
          ((*pointer + 1)->data.operation == KEY_BEGIN)))
         retValue = GetF(pointer);
@@ -44,21 +44,21 @@ Node* GetF(Node** pointer) {
 
     Node* retValue = 0;
 
-    if ((**pointer).type == TYPE_VAR) {
+    if ((**pointer).type == NodeDataTypes::TYPE_VAR) {
         retValue = GetV(pointer);
 
-        if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_WITH)) {
+        if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_WITH)) {
             retValue->left = *pointer;
             (*pointer)++;
 
             bool firstTimeFlag = 1;
 
-            retValue->type = TYPE_FUNC;
+            retValue->type = NodeDataTypes::TYPE_FUNC;
             Node* bottomPtr = retValue->left;
 
-            while (((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN)) {
+            while (((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN)) {
                 if (!firstTimeFlag) {
-                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {
+                    if (((**pointer).type == NodeDataTypes::TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {
                         bottomPtr->right = *pointer;
                         bottomPtr = *pointer;
 
@@ -70,20 +70,20 @@ Node* GetF(Node** pointer) {
                 firstTimeFlag = 0;
             }
         }
-        Require(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN));
+        Require(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_BEGIN));
 
         retValue->right = GetK(pointer);
         Node* bottom = retValue->right;
 
-        while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+        while(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
             bottom->right = GetK(pointer);
             bottom = bottom->right;
         }
     }
 
-    retValue->type = TYPE_FUNC;
+    retValue->type = NodeDataTypes::TYPE_FUNC;
 
-    if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_LILEND)) {
+    if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_LILEND)) {
         (*pointer)->left = retValue;
         retValue = *pointer;
 
@@ -100,11 +100,11 @@ Node* GetF(Node** pointer) {
     (*pointer)++;                                                                                   \
     Node* remember = function(pointer);                                                             \
                                                                                                     \
-    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {                \
+    if (((**pointer).type == NodeDataTypes::TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {                \
         Node* bottom = retValue;                                                                    \
         bottom->left = remember;                                                                    \
                                                                                                     \
-        while (((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT)) {     \
+        while (((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT)) {     \
             bottom->right = *pointer;                                                               \
             bottom = bottom->right;                                                                 \
                                                                                                     \
@@ -112,15 +112,15 @@ Node* GetF(Node** pointer) {
             bottom->left = function(pointer);                                                       \
         }                                                                                           \
                                                                                                     \
-        Require(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT));     \
+        Require(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT));     \
     }                                                                                               \
     else {                                                                                          \
-        Require(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT));     \
+        Require(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT));     \
                                                                                                     \
         retValue->left = remember;                                                                  \
     }                                                                                               \
                                                                                                     \
-    Node* conkNode = MakeNewNode(EOL_OP, 0, 0, TYPE_UNO, retValue, 0);                              \
+    Node* conkNode = MakeNewNode(EOL_OP, 0, 0, NodeDataTypes::TYPE_UNO, retValue, 0);                              \
     return conkNode;                                                                                \
     break
 
@@ -128,7 +128,7 @@ Node* GetD(Node** pointer) {
     assert( pointer != nullptr);
     assert(*pointer != nullptr);
 
-    if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DIFF)) {
+    if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DIFF)) {
         (*pointer)++;
         Node* diffResult = Differentiate(GetE(pointer));
         diffResult       = OptimisationAfterDiff(diffResult);
@@ -144,7 +144,7 @@ Node* GetK(Node** pointer) {
     assert( pointer != nullptr);
     assert(*pointer != nullptr);
 
-    if ((**pointer).type == TYPE_KEYWORD) {
+    if ((**pointer).type == NodeDataTypes::TYPE_KEYWORD) {
     Node* retValue = *pointer;
 
     switch ((**pointer).data.operation) {
@@ -172,18 +172,18 @@ Node* GetK(Node** pointer) {
             (*pointer)++;
             Node* whoNode = GetV(pointer);
             
-            if (((**pointer).data.operation == KEY_FROM) && ((**pointer).type == TYPE_KEYWORD)) {
+            if (((**pointer).data.operation == KEY_FROM) && ((**pointer).type == NodeDataTypes::TYPE_KEYWORD)) {
                 retValue->left = (*pointer)++;
                 retValue->left->left = whoNode;
                 
                 Node* fromNode = GetD(pointer);
-                if (((**pointer).data.operation == KEY_TO) && ((**pointer).type == TYPE_KEYWORD)) {
+                if (((**pointer).data.operation == KEY_TO) && ((**pointer).type == NodeDataTypes::TYPE_KEYWORD)) {
                     retValue->left->right = (*pointer)++;
                     retValue->left->right->left = fromNode;
 
                     Node* toNode = GetD(pointer);
                     
-                    if (((**pointer).data.operation == KEY_WITH) && ((**pointer).type == TYPE_KEYWORD)) {
+                    if (((**pointer).data.operation == KEY_WITH) && ((**pointer).type == NodeDataTypes::TYPE_KEYWORD)) {
                         retValue->left->right->right = (*pointer)++;
 
                         retValue->left->right->right->left  = toNode;
@@ -212,7 +212,7 @@ Node* GetK(Node** pointer) {
         retValue->right->left = GetK(pointer);
         Node* bottom = retValue->right->left;
 
-        while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+        while(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
             bottom->right = GetK(pointer);
             bottom = bottom->right;
         }
@@ -223,7 +223,7 @@ Node* GetK(Node** pointer) {
     }
 
     if ((retValue->data.operation   == KEY_IF) &&
-        ((**pointer).type           == TYPE_KEYWORD)   && 
+        ((**pointer).type           == NodeDataTypes::TYPE_KEYWORD)   && 
         ((**pointer).data.operation == KEY_ELSEIF)) {
 
         (**pointer).data.operation  = KEY_IF;
@@ -231,7 +231,7 @@ Node* GetK(Node** pointer) {
     }
     else if (((retValue->data.operation   == KEY_IF)    || 
               (retValue->data.operation   == KEY_WHILE)) &&
-            ((**pointer).type == TYPE_KEYWORD)          && 
+            ((**pointer).type == NodeDataTypes::TYPE_KEYWORD)          && 
             ((**pointer).data.operation == KEY_ELSE)) {
 
         (*pointer)++;
@@ -240,13 +240,13 @@ Node* GetK(Node** pointer) {
         retValue->right->right = GetK(pointer);
         Node* bottom = retValue->right->right;
 
-        while(((**pointer).type != TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
+        while(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_LILEND)) {
             bottom->right = GetK(pointer);
             bottom = bottom->right;
         }
         (*pointer)++;
     }
-    Node* connector = MakeNewNode(EOL_OP, 0, 0, TYPE_UNO, retValue, 0);
+    Node* connector = MakeNewNode(EOL_OP, 0, 0, NodeDataTypes::TYPE_UNO, retValue, 0);
     retValue = connector;
 
     return retValue;
@@ -263,18 +263,18 @@ Node* GetS(Node** pointer) {
 
     Node* retValue       = 0;
 
-    if (((**pointer).type == TYPE_VAR) &&
-        ((*(*pointer + 1)).type == TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_IN)) {
+    if (((**pointer).type == NodeDataTypes::TYPE_VAR) &&
+        ((*(*pointer + 1)).type == NodeDataTypes::TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_IN)) {
         retValue       = *pointer + 1;
         retValue->left = GetV(pointer);
         
         (*pointer)++;
         retValue->right = GetD(pointer);
     }
-    else if (((*(*pointer + 1)).type == TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_TO)) {
+    else if (((*(*pointer + 1)).type == NodeDataTypes::TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_TO)) {
         Node* expression = GetD(pointer);
 
-        if (((**pointer).type == TYPE_KEYWORD) && ((**pointer).data.operation == KEY_TO)) {
+        if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_TO)) {
             retValue = *pointer;
             (*pointer)++;
 
@@ -289,7 +289,7 @@ Node* GetS(Node** pointer) {
         retValue = GetD(pointer);
     }
     
-    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == EOL_OP)) {
+    if (((**pointer).type == NodeDataTypes::TYPE_UNO) && ((**pointer).data.operation == EOL_OP)) {
         (*pointer)->left = retValue;
         retValue = *pointer;
 
@@ -308,7 +308,7 @@ Node* GetE(Node** pointer) {
 
     Node* retValue = 0;
 
-    if ((**pointer).type != TYPE_STR) {
+    if ((**pointer).type != NodeDataTypes::TYPE_STR) {
         retValue = GetT(pointer);
         
         while((((**pointer).data.operation == ADD_OP) || 
@@ -318,7 +318,7 @@ Node* GetE(Node** pointer) {
             ((**pointer).data.operation == GEQ_OP) ||
             ((**pointer).data.operation == G_OP)   ||
             ((**pointer).data.operation == DEQ_OP)) &&
-            ((**pointer).type == TYPE_OP)) {
+            ((**pointer).type == NodeDataTypes::TYPE_OP)) {
             Node*  operationNode = *pointer;
             (*pointer)++;
 
@@ -344,7 +344,7 @@ Node* GetT(Node** pointer) {
     Node* retValue = GetDeg(pointer);
 
     while((((**pointer).data.operation == MUL_OP) || ((**pointer).data.operation == DIV_OP)) &&
-           ((**pointer).type = TYPE_OP)) {
+           ((**pointer).type == NodeDataTypes::TYPE_OP)) {
         Node* operationNode = *pointer;
         (*pointer)++;
 
@@ -365,7 +365,7 @@ Node* GetDeg(Node** pointer) {
 
     Node* retValue = GetP(pointer);
 
-    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == POW_OP)) {
+    if (((**pointer).type == NodeDataTypes::TYPE_OP) && ((**pointer).data.operation == POW_OP)) {
         Node* remember = retValue;
 
         retValue = *pointer;
@@ -385,42 +385,42 @@ Node* GetP(Node** pointer) {
     Node* retValue = nullptr;
     Node* bottom = nullptr;
 
-    while ((**pointer).type == TYPE_OP) {
+    while ((**pointer).type == NodeDataTypes::TYPE_OP) {
         if ((**pointer).data.operation == SUB_OP) {
             if (bottom == nullptr) {
-                bottom        = MakeNewNode(MUL_OP, 0, 0, TYPE_OP, 0, 0);
+                bottom        = MakeNewNode(MUL_OP, 0, 0, NodeDataTypes::TYPE_OP, 0, 0);
             }
             else {
-                bottom->right = MakeNewNode(MUL_OP, 0, 0, TYPE_OP, 0, 0);
+                bottom->right = MakeNewNode(MUL_OP, 0, 0, NodeDataTypes::TYPE_OP, 0, 0);
                 bottom = bottom->right;
             }
 
-            bottom->left = MakeNewNode(0, -1, 0, TYPE_CONST, 0, 0);
+            bottom->left = MakeNewNode(0, -1, 0, NodeDataTypes::TYPE_CONST, 0, 0);
         }
 
         (*pointer)++;
     }
 
-    if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
+    if (((**pointer).type == NodeDataTypes::TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
         (*pointer)++;
 
         retValue = GetD(pointer);
 
-        Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
+        Require(((**pointer).type != NodeDataTypes::TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
     }
-    else if ((**pointer).type == TYPE_VAR) {
+    else if ((**pointer).type == NodeDataTypes::TYPE_VAR) {
         retValue = GetV(pointer);
 
-        if (((**pointer).type == TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
+        if (((**pointer).type == NodeDataTypes::TYPE_UNO) && ((**pointer).data.operation == LEFT_ROUND_OP)) {
             (*pointer)++;
             bool firstTimeFlag = 1;
 
-            retValue->type = TYPE_FUNC;
+            retValue->type = NodeDataTypes::TYPE_FUNC;
             Node* bottomPtr = retValue;
 
-            while (((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP)) {
+            while (((**pointer).type != NodeDataTypes::TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP)) {
                 if (!firstTimeFlag) {
-                    if (((**pointer).type == TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {
+                    if (((**pointer).type == NodeDataTypes::TYPE_OP) && ((**pointer).data.operation == COMMA_OP)) {
                         bottomPtr->right = *pointer;
                         bottomPtr = *pointer;
 
@@ -432,7 +432,7 @@ Node* GetP(Node** pointer) {
                 firstTimeFlag = 0;
             }
 
-            Require(((**pointer).type != TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
+            Require(((**pointer).type != NodeDataTypes::TYPE_UNO) || ((**pointer).data.operation != RIGHT_ROUND_OP));
         }
     }
     else {
@@ -454,7 +454,7 @@ Node* GetStr(Node** pointer) {
     Node* retValue = *pointer;
     (*pointer)++;
 
-    if (retValue->type != TYPE_STR) {
+    if (retValue->type != NodeDataTypes::TYPE_STR) {
         assert(FAIL && "INVALID RETURN FOR GET STR FUNCTION");
     }
 
@@ -468,7 +468,7 @@ Node* GetV(Node** pointer) {
     Node* retValue = *pointer;
     (*pointer)++;
 
-    if ((*retValue).type != TYPE_VAR) {
+    if ((*retValue).type != NodeDataTypes::TYPE_VAR) {
         assert(FAIL && "INVALID RETURN FOR GET V FUNCTION");
     } 
 
@@ -482,7 +482,7 @@ Node* GetN(Node** pointer) {
     Node* retValue = *pointer;
     (*pointer)++;
 
-    if ((*retValue).type != TYPE_CONST) {
+    if ((*retValue).type != NodeDataTypes::TYPE_CONST) {
         assert(FAIL && "INVALID RETURN FOR GET N FUNCTION");
     } 
 
@@ -527,14 +527,14 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
         
             int8_t keywordNum = 0;
             if ((keywordNum = IsKeyword(bufferRemember, keywords))) {
-                tokens->array[tokensCounter].type            = TYPE_KEYWORD;
+                tokens->array[tokensCounter].type            = NodeDataTypes::TYPE_KEYWORD;
                 tokens->array[tokensCounter].data.operation  = keywordNum;
 
                 databaseCounter = bufferRemember - tokens->database;
             }
             else {
                 tokens->array[tokensCounter].data.expression = bufferRemember;
-                tokens->array[tokensCounter].type            = TYPE_VAR;
+                tokens->array[tokensCounter].type            = NodeDataTypes::TYPE_VAR;
             }
             
             tokensCounter++;
@@ -573,7 +573,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
             }
             curChar--;
 
-            tokens->array[tokensCounter].type               = TYPE_CONST;
+            tokens->array[tokensCounter].type               = NodeDataTypes::TYPE_CONST;
             tokens->array[tokensCounter].data.number        = value;
 
             tokensCounter++;
@@ -593,7 +593,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
             databaseCounter++;
 
             tokens->array[tokensCounter].data.expression = bufferRemember;
-            tokens->array[tokensCounter].type            = TYPE_STR;
+            tokens->array[tokensCounter].type            = NodeDataTypes::TYPE_STR;
 
             tokensCounter++;
         }
@@ -606,7 +606,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 case LEFT_CUR_OP:
                 case RIGHT_CUR_OP:
                 case EOL_OP:
-                    tokens->array[tokensCounter].type           = TYPE_UNO;
+                    tokens->array[tokensCounter].type           = NodeDataTypes::TYPE_UNO;
                     tokens->array[tokensCounter].data.operation = *curChar;
                     break;
                 case COMMA_OP:
@@ -615,7 +615,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                 case MUL_OP:
                 case DIV_OP:
                 case POW_OP:
-                    tokens->array[tokensCounter].type           = TYPE_OP;
+                    tokens->array[tokensCounter].type           = NodeDataTypes::TYPE_OP;
                     tokens->array[tokensCounter].data.operation = *curChar;
                     break;
                 case NON_OP:
@@ -626,7 +626,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                     else {
                         assert(FAIL && "SINGLE NON OPERATOR NOT ALLOWED");
                     }
-                    tokens->array[tokensCounter].type = TYPE_OP;
+                    tokens->array[tokensCounter].type = NodeDataTypes::TYPE_OP;
                     break;
                 case L_OP:
                     if (*(curChar + 1) == EQ_OP) {
@@ -636,7 +636,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                     else {
                         tokens->array[tokensCounter].data.operation = *curChar;
                     }
-                    tokens->array[tokensCounter].type = TYPE_OP;
+                    tokens->array[tokensCounter].type = NodeDataTypes::TYPE_OP;
                     break;
                 case G_OP:
                     if (*(curChar + 1) == EQ_OP) {
@@ -646,7 +646,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                     else {
                         tokens->array[tokensCounter].data.operation = *curChar;
                     }
-                    tokens->array[tokensCounter].type = TYPE_OP;
+                    tokens->array[tokensCounter].type = NodeDataTypes::TYPE_OP;
                     break;
                 case EQ_OP:
                     if (*(curChar + 1) == EQ_OP) {
@@ -656,7 +656,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                     else {
                         assert(FAIL && "SINGLE EQ NOT AN OPERATOR");
                     }
-                    tokens->array[tokensCounter].type = TYPE_OP;
+                    tokens->array[tokensCounter].type = NodeDataTypes::TYPE_OP;
                     break;
                 default:
                     printf("%c[%d]\n", *curChar,*curChar);

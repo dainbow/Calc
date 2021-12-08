@@ -40,7 +40,7 @@
 #define POP_TO_MEM(offset)  DoToMem(5, offset, context)
 #define IN_TO_MEM(offset)   DoToMem(13, offset, context)
     
-#define STRING(strName) MakeString(strName, context)
+#define STRING(strName)     MakeString(strName, context)
 
 #define SINGULAR_OP(number) EmitCommand(number, context->result)
 
@@ -144,7 +144,7 @@ bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    if (AST->type == TYPE_KEYWORD) {
+    if (AST->type == NodeDataTypes::TYPE_KEYWORD) {
         switch (AST->data.operation) {
             case KEY_GOBBLE:
                 ProcessGobble(AST, output, context);
@@ -230,7 +230,7 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     double toValue   = 0;
     double iterValue = 0;
 
-    if (AST->left->right->right->type == TYPE_KEYWORD) {
+    if (AST->left->right->right->type == NodeDataTypes::TYPE_KEYWORD) {
         toValue   = AST->left->right->right->left->data.number;
         iterValue = AST->left->right->right->right->data.number;
     }
@@ -388,7 +388,7 @@ void ProcessCry(Node* AST, FILE* output, CodegenContext* context) {
     assert(context != nullptr);
 
     ASTBypass(AST->left, output, context);
-    if (AST->left->type != TYPE_STR) {
+    if (AST->left->type != NodeDataTypes::TYPE_STR) {
         OUT_CONST(1);
         fprintf(output, "out 1\n");
     }
@@ -403,7 +403,7 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    if (AST->type == TYPE_FUNC) {
+    if (AST->type == NodeDataTypes::TYPE_FUNC) {
         if (!context->ifInFunction) {
             StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
@@ -428,7 +428,7 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
         }
         else {
             if ((AST->right != nullptr)        &&
-                (AST->right->type == TYPE_UNO) &&
+                (AST->right->type == NodeDataTypes::TYPE_UNO) &&
                 (AST->right->data.operation == '$')) {
                 assert(0 && "DECLARATION OF FUNCTION IN FUNCTION BODY");
             }
@@ -451,7 +451,7 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
     int32_t paramAmount = 0;
     if (AST->left != nullptr) {
         ASTBypass(AST->left, output, context);
-        if (AST->left->type != TYPE_STR)
+        if (AST->left->type != NodeDataTypes::TYPE_STR)
             paramAmount++;
     }
 
@@ -459,7 +459,7 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
         paramAmount += ExecuteFunction(AST->right, output, context);
     }
 
-    if (AST->type == TYPE_FUNC) {
+    if (AST->type == NodeDataTypes::TYPE_FUNC) {
         if (GetFuncArgAmount(AST->data.expression, context) != paramAmount) {
             assert(0 && "INVALID AMOUNT OF ARGUMENTS");
         }
@@ -487,12 +487,12 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
         ASTBypass(AST->right, output, context);
     }
 
-    if (AST->type == TYPE_CONST) {
+    if (AST->type == NodeDataTypes::TYPE_CONST) {
         PUSH_CONST(AST->data.number);
         fprintf(output, "push %f\n", (double)AST->data.number);
     }
 
-    if (AST->type == TYPE_STR) {
+    if (AST->type == NodeDataTypes::TYPE_STR) {
         int32_t stringNum = 0;
 
         if ((stringNum = FindString(AST->data.expression, context)) != -1) {
@@ -508,7 +508,7 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
         }
     }
 
-    if (AST->type == TYPE_VAR) {
+    if (AST->type == NodeDataTypes::TYPE_VAR) {
         int32_t varOffset = GetVarOffset(AST->data.expression, context);
         if (varOffset == -1)
             assert(0 && "UNKNOWN VAR");
@@ -517,7 +517,7 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
         fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
     }
 
-    if (AST->type == TYPE_OP) {
+    if (AST->type == NodeDataTypes::TYPE_OP) {
         PrintOperation(AST, output, context);
     }
 }
@@ -823,9 +823,9 @@ bool SkipConk(Node* AST, FILE* output, CodegenContext* context) {
     assert(output  != nullptr);
     assert(context != nullptr);
 
-    if (((AST->type == TYPE_UNO)       &&
+    if (((AST->type == NodeDataTypes::TYPE_UNO)       &&
          (AST->data.operation == EOL_OP)) ||
-        ((AST->type == TYPE_KEYWORD) &&
+        ((AST->type == NodeDataTypes::TYPE_KEYWORD) &&
          (AST->data.operation == KEY_LILEND))) {
         if (AST->left != nullptr) {
             ASTBypass(AST->left, output, context);
@@ -927,26 +927,26 @@ void PrintAST(Node* node, FILE* output) {
     assert(output != nullptr);
 
     switch (node->type) {
-        case TYPE_FUNC:
+        case NodeDataTypes::TYPE_FUNC:
             PrintFunction(node, output);
             break;
-        case TYPE_KEYWORD:
+        case NodeDataTypes::TYPE_KEYWORD:
             PrintKeyword(node, output);
             break;
-        case TYPE_UNO: 
-        case TYPE_OP:
+        case NodeDataTypes::TYPE_UNO: 
+        case NodeDataTypes::TYPE_OP:
             PrintOperationMinus1(node, output);
             break;
-        case TYPE_STR:
+        case NodeDataTypes::TYPE_STR:
             PrintString(node, output);
             break;
-        case TYPE_VAR:
+        case NodeDataTypes::TYPE_VAR:
             fprintf(output, "%s ", node->data.expression);
             break;
-        case TYPE_CONST:
+        case NodeDataTypes::TYPE_CONST:
             fprintf(output, "%lf ", node->data.number);
             break;
-        case TYPE_UNKNOWN:
+        case NodeDataTypes::TYPE_UNKNOWN:
             assert(FAIL && "TYPE IS UNKNOWN");
             break;
         default:
@@ -963,7 +963,7 @@ void PrintString(Node* node, FILE* output) {
 }
 
 #define BRACKETS_IF(DISTONATION, BRACKETS_TYPE)                             \
-    if ((node-> DISTONATION ->type == TYPE_OP) &&                           \
+    if ((node-> DISTONATION ->type == NodeDataTypes::TYPE_OP) &&                           \
         (GetOperationPriority(node-> DISTONATION-> data.operation) <        \
         GetOperationPriority(node->data.operation))) {                      \
         fprintf(output, BRACKETS_TYPE);                                     \
@@ -1044,7 +1044,7 @@ void PrintOperationMinus1(Node* node, FILE* output) {
             fprintf(output, "} ");
             break;
         case EOL_OP:
-            if  (!((node->left->type == TYPE_KEYWORD)       &&
+            if  (!((node->left->type == NodeDataTypes::TYPE_KEYWORD)       &&
                 ((node->left->data.operation == KEY_FOR)    ||
                  (node->left->data.operation == KEY_CRY)    ||
                  (node->left->data.operation == KEY_GOBBLE) ||
@@ -1090,7 +1090,7 @@ void PrintFunction(Node* node, FILE* output) {
         fprintf(output, "%s() ", node->data.expression);
     }
     else if (node->left != nullptr) {
-        if ((node->left->type           == TYPE_KEYWORD) &&
+        if ((node->left->type           == NodeDataTypes::TYPE_KEYWORD) &&
             (node->left->data.operation == KEY_WITH)) {
             fprintf(output, "%s with ", node->data.expression);
             
@@ -1325,7 +1325,7 @@ void DoToRegister(int8_t cmdNum, CodegenContext* context) {
 
 void DoToMem(int8_t cmdNum, double offset, CodegenContext* context) {
     assert(context != nullptr);
-
+    
     EmitCommand(cmdNum, context->result);                                                                            
     NewArgument(TO_MEM_FLAGS, (ProcStackElem)(offset * ACCURACY), 1, nullptr, -1, (char*)nullptr, context);                                          
     EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
