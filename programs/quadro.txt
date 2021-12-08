@@ -1,5 +1,6 @@
 CalculateD with a, b, c begin
-	spit b^2 - 4*a*c $
+	b in diff (b^3)/3 $
+	spit b - 4*a*c $
 lilEnd
 
 SolveLinear with b, c begin

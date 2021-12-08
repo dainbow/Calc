@@ -107,3 +107,12 @@ void PrintOperationMinus1(Node* node, FILE* output);
 void PrintFunction(Node* node, FILE* output);
 void PrintKeyword(Node* node, FILE* output);
 void PrintString(Node* node, FILE* output);
+
+void NewArgument(Flags flags, int32_t argConstant, int32_t reg, const char labelName[], int32_t labelNum, const char string[], CodegenContext* context);
+void MakeSomethingWithLabel(int8_t commandNum, const char labelName[], uint32_t labelNum, CodegenContext* context);
+void MakeString(const char stringName[], CodegenContext* context);
+void MakeLabel(const char labelName[], int32_t labelNumber, CodegenContext* context);
+
+void DoWithConstant(int8_t cmdNum, double constant, CodegenContext* context);
+void DoToRegister(int8_t cmdNum, CodegenContext* context);
+void DoToMem(int8_t cmdNum, double offset, CodegenContext* context);

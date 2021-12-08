@@ -1,0 +1,572 @@
+call main
+hlt
+CalculateD:
+pop {bx + 8}
+pop {bx + 4}
+pop {bx + 0}
+push 3.000000
+push {bx + 4}
+push 2.000000
+pow
+mul
+push 3.000000
+mul
+push 9.000000
+div
+pop {bx + 4}
+push {bx + 4}
+push 4.000000
+push {bx + 0}
+mul
+push {bx + 8}
+mul
+sub
+ret
+ret
+SolveLinear:
+pop {bx + 4}
+pop {bx + 0}
+push {bx + 0}
+push 0.000000
+sub
+push 0
+je compareg0
+push 0
+jump comparezero0
+compareg0:
+push 1
+comparezero0:
+push 0
+je ifelse0
+push {bx + 4}
+push 0.000000
+sub
+push 0
+je compareg1
+push 0
+jump comparezero1
+compareg1:
+push 1
+comparezero1:
+push 0
+je ifelse1
+strout str0
+jump ifend1
+ifelse1:
+strout str1
+ifend1:
+jump ifend0
+ifelse0:
+strout str2
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 0}
+div
+out 1
+ifend0:
+ret
+main:
+strout str3
+in {bx + 0}
+in {bx + 4}
+in {bx + 8}
+push {bx + 0}
+push 0.000000
+sub
+push 0
+je compareg2
+push 0
+jump comparezero2
+compareg2:
+push 1
+comparezero2:
+push 0
+je ifelse2
+push {bx + 4}
+push {bx + 8}
+push 12
+push bx
+add
+pop bx
+call SolveLinear
+push bx
+push 12
+sub
+pop bx
+jump ifend2
+ifelse2:
+push {bx + 4}
+push 0.000000
+sub
+push 0
+je compareg3
+push 0
+jump comparezero3
+compareg3:
+push 1
+comparezero3:
+push 0
+je ifelse3
+push {bx + 8}
+push 0.000000
+sub
+push 0
+jb compareg4
+push 0
+jump comparezero4
+compareg4:
+push 1
+comparezero4:
+push 0
+je ifelse4
+strout str4
+jump ifend4
+ifelse4:
+push {bx + 8}
+push 0.000000
+sub
+push 0
+je compareg5
+push 0
+jump comparezero5
+compareg5:
+push 1
+comparezero5:
+push 0
+je ifelse5
+strout str2
+push 0.000000
+out 1
+jump ifend5
+ifelse5:
+strout str5
+push {bx + 8}
+push 1.000000
+push 2.000000
+div
+pow
+out 1
+push -1.000000
+push {bx + 8}
+push 1.000000
+push 2.000000
+div
+pow
+mul
+out 1
+ifend5:
+ifend4:
+jump ifend3
+ifelse3:
+push {bx + 8}
+push 0.000000
+sub
+push 0
+je compareg6
+push 0
+jump comparezero6
+compareg6:
+push 1
+comparezero6:
+push 0
+je ifelse6
+strout str5
+push 0.000000
+out 1
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 0}
+div
+out 1
+jump ifend6
+ifelse6:
+push {bx + 0}
+push {bx + 4}
+push {bx + 8}
+push 16
+push bx
+add
+pop bx
+call CalculateD
+push bx
+push 16
+sub
+pop bx
+pop {bx + 12}
+push {bx + 12}
+push 0.000000
+sub
+push 0
+jb compareg7
+push 0
+jump comparezero7
+compareg7:
+push 1
+comparezero7:
+push 0
+je ifelse7
+strout str1
+jump ifend7
+ifelse7:
+push {bx + 12}
+push 0.000000
+sub
+push 0
+je compareg8
+push 0
+jump comparezero8
+compareg8:
+push 1
+comparezero8:
+push 0
+je ifelse8
+strout str2
+push -1.000000
+push {bx + 4}
+mul
+push 2.000000
+push {bx + 0}
+mul
+div
+out 1
+jump ifend8
+ifelse8:
+push {bx + 12}
+push 1.000000
+push 2.000000
+div
+pow
+pop {bx + 12}
+strout str5
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 12}
+add
+push 2.000000
+push {bx + 0}
+mul
+div
+out 1
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 12}
+sub
+push 2.000000
+push {bx + 0}
+mul
+div
+out 1
+ifend8:
+ifend7:
+ifend6:
+ifend3:
+ifend2:
+ret
+str0:
+db The equation has infinity amount of roots
+
+str1:
+db The equation doesnt have roots
+
+str2:
+db The equation has 1 root
+
+str3:
+db Please enter a b c koefs of equation
+
+str4:
+db The equation doesn't have roots
+
+str5:
+db The equation has 2 roots
+
+call main
+hlt
+CalculateD:
+pop {bx + 8}
+pop {bx + 4}
+pop {bx + 0}
+push 3.000000
+push {bx + 4}
+push 2.000000
+pow
+mul
+push 3.000000
+mul
+push 9.000000
+div
+pop {bx + 4}
+push {bx + 4}
+push 4.000000
+push {bx + 0}
+mul
+push {bx + 8}
+mul
+sub
+ret
+ret
+SolveLinear:
+pop {bx + 4}
+pop {bx + 0}
+push {bx + 0}
+push 0.000000
+sub
+push 0
+je compareg0
+push 0
+jump comparezero0
+compareg0:
+push 1
+comparezero0:
+push 0
+je ifelse0
+push {bx + 4}
+push 0.000000
+sub
+push 0
+je compareg1
+push 0
+jump comparezero1
+compareg1:
+push 1
+comparezero1:
+push 0
+je ifelse1
+strout str0
+jump ifend1
+ifelse1:
+strout str1
+ifend1:
+jump ifend0
+ifelse0:
+strout str2
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 0}
+div
+out 1
+ifend0:
+ret
+main:
+strout str3
+in {bx + 0}
+in {bx + 4}
+in {bx + 8}
+push {bx + 0}
+push 0.000000
+sub
+push 0
+je compareg2
+push 0
+jump comparezero2
+compareg2:
+push 1
+comparezero2:
+push 0
+je ifelse2
+push {bx + 4}
+push {bx + 8}
+push 12
+push bx
+add
+pop bx
+call SolveLinear
+push bx
+push 12
+sub
+pop bx
+jump ifend2
+ifelse2:
+push {bx + 4}
+push 0.000000
+sub
+push 0
+je compareg3
+push 0
+jump comparezero3
+compareg3:
+push 1
+comparezero3:
+push 0
+je ifelse3
+push {bx + 8}
+push 0.000000
+sub
+push 0
+jb compareg4
+push 0
+jump comparezero4
+compareg4:
+push 1
+comparezero4:
+push 0
+je ifelse4
+strout str4
+jump ifend4
+ifelse4:
+push {bx + 8}
+push 0.000000
+sub
+push 0
+je compareg5
+push 0
+jump comparezero5
+compareg5:
+push 1
+comparezero5:
+push 0
+je ifelse5
+strout str2
+push 0.000000
+out 1
+jump ifend5
+ifelse5:
+strout str5
+push {bx + 8}
+push 1.000000
+push 2.000000
+div
+pow
+out 1
+push -1.000000
+push {bx + 8}
+push 1.000000
+push 2.000000
+div
+pow
+mul
+out 1
+ifend5:
+ifend4:
+jump ifend3
+ifelse3:
+push {bx + 8}
+push 0.000000
+sub
+push 0
+je compareg6
+push 0
+jump comparezero6
+compareg6:
+push 1
+comparezero6:
+push 0
+je ifelse6
+strout str5
+push 0.000000
+out 1
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 0}
+div
+out 1
+jump ifend6
+ifelse6:
+push {bx + 0}
+push {bx + 4}
+push {bx + 8}
+push 16
+push bx
+add
+pop bx
+call CalculateD
+push bx
+push 16
+sub
+pop bx
+pop {bx + 12}
+push {bx + 12}
+push 0.000000
+sub
+push 0
+jb compareg7
+push 0
+jump comparezero7
+compareg7:
+push 1
+comparezero7:
+push 0
+je ifelse7
+strout str1
+jump ifend7
+ifelse7:
+push {bx + 12}
+push 0.000000
+sub
+push 0
+je compareg8
+push 0
+jump comparezero8
+compareg8:
+push 1
+comparezero8:
+push 0
+je ifelse8
+strout str2
+push -1.000000
+push {bx + 4}
+mul
+push 2.000000
+push {bx + 0}
+mul
+div
+out 1
+jump ifend8
+ifelse8:
+push {bx + 12}
+push 1.000000
+push 2.000000
+div
+pow
+pop {bx + 12}
+strout str5
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 12}
+add
+push 2.000000
+push {bx + 0}
+mul
+div
+out 1
+push -1.000000
+push {bx + 4}
+mul
+push {bx + 12}
+sub
+push 2.000000
+push {bx + 0}
+mul
+div
+out 1
+ifend8:
+ifend7:
+ifend6:
+ifend3:
+ifend2:
+ret
+str0:
+db The equation has infinity amount of roots
+
+str1:
+db The equation doesnt have roots
+
+str2:
+db The equation has 1 root
+
+str3:
+db Please enter a b c koefs of equation
+
+str4:
+db The equation doesn't have roots
+
+str5:
+db The equation has 2 roots
+

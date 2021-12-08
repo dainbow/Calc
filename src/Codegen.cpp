@@ -7,94 +7,42 @@
 #define CONST_FLAGS     {0, 0, 1, 0, 0}
 #define REGISTER_FLAGS  {0, 0, 0, 1, 0}
 
-#define NEW_ARG(flags, constanta, reg, labelFormat, string, ...)                \
-    context->arguments[context->amounts.argumentsAmount].argFlags   = flags;                              \
-    context->arguments[context->amounts.argumentsAmount].argConst   = constanta;                          \
-    context->arguments[context->amounts.argumentsAmount].argReg     = reg;                                \
-                                                                                \
-    sprintf((char*)context->arguments[context->amounts.argumentsAmount].labelName,  labelFormat __VA_ARGS__);       \
-    if (string != nullptr)                                                                                                \
-        sprintf((char*)context->arguments[context->amounts.argumentsAmount].stringName, "%s", string);              \
-                                                                                        \
-    context->amounts.argumentsAmount++;
+#define CALL(function)          MakeSomethingWithLabel(41, function, -1, context)
 
+#define JA(function, number)    MakeSomethingWithLabel(17, function, number, context)
 
-#define SMTH_WITH_LABEL(number, function, ...)                                 \
-    EmitCommand(number, context->result);                       \
-    NEW_ARG(LABEL_FLAGS, 0, 0, function, (char*)nullptr, __VA_ARGS__);   \
-    EmitArgs(number, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
+#define JAE(function, number)       MakeSomethingWithLabel(21, function, number, context)
 
+#define JB(function, number)        MakeSomethingWithLabel(25, function, number, context)
 
-#define CALL(function, ...) SMTH_WITH_LABEL(41, function, __VA_ARGS__)
+#define JBE(function, number)       MakeSomethingWithLabel(29, function, number, context)
 
-#define JA(function, ...) SMTH_WITH_LABEL(17, function, __VA_ARGS__)
+#define JE(function, number)        MakeSomethingWithLabel(33, function, number, context)
 
-#define JAE(function, ...) SMTH_WITH_LABEL(21, function, __VA_ARGS__)
+#define JNE(function, number)       MakeSomethingWithLabel(37, function, number, context)
 
-#define JB(function, ...) SMTH_WITH_LABEL(25, function, __VA_ARGS__)
+#define JUMP(function, number)      MakeSomethingWithLabel(9, function, number, context)
 
-#define JBE(function, ...) SMTH_WITH_LABEL(29, function, __VA_ARGS__)
+#define STROUT(function, number)    MakeSomethingWithLabel(49, function, number, context)
+    
+#define LABEL(labelName, number)    MakeLabel(labelName, number, context)                          
 
-#define JE(function, ...) SMTH_WITH_LABEL(33, function, __VA_ARGS__)
+#define HLT EmitCommand(0, context->result)   
+#define RET EmitCommand(44, context->result)    
 
-#define JNE(function, ...) SMTH_WITH_LABEL(37, function, __VA_ARGS__)
+#define POP_TO_REG  DoToRegister(5, context)
+#define PUSH_TO_REG DoToRegister(1, context)
 
-#define JUMP(function, ...) SMTH_WITH_LABEL(9, function, __VA_ARGS__)
+#define PUSH_CONST(constant) DoWithConstant(1, constant, context)
+#define OUT_CONST(constant)  DoWithConstant(57, constant, context)
 
-#define STROUT(function, ...) SMTH_WITH_LABEL(49, function, __VA_ARGS__)
+#define PUSH_TO_MEM(offset) DoToMem(1, offset, context)
+#define POP_TO_MEM(offset)  DoToMem(5, offset, context)
+#define IN_TO_MEM(offset)   DoToMem(13, offset, context)
+    
+#define STRING(strName) MakeString(strName, context)
 
-#define STRING(string, ...) \
-    NEW_ARG(STRING_FLAGS, 0, 0, "null", string, __VA_ARGS__);                                                           \
-    EmitArgs(36, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)    
-
-#define LABEL(labelFormat, ...)                                 \
-    NEW_ARG(LABEL_FLAGS, 0, 0, labelFormat, (char*)nullptr, __VA_ARGS__);     \
-    EmitArgs(0, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define HLT                                  \
-    EmitCommand(0, context->result)   
-
-#define RET             \
-    EmitCommand(44, context->result)    
-
-#define PUSH_CONST(consta)                                                                                      \
-    EmitCommand(1, context->result);                                                                            \
-    NEW_ARG(CONST_FLAGS, (ProcStackElem)(consta * ACCURACY), 0, "null", (char*)nullptr);                                \
-    EmitArgs(1, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define PUSH_REG                                                                                                \
-    EmitCommand(1, context->result);                                                                            \
-    NEW_ARG(REGISTER_FLAGS, 0, 1, "null", (char*)nullptr);                                                              \
-    EmitArgs(1, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-
-#define OUT_CONST(consta)                                                                                      \
-    EmitCommand(57, context->result);                                                                            \
-    NEW_ARG(CONST_FLAGS, (ProcStackElem)(consta * ACCURACY), 0, "null", (char*)nullptr);                                          \
-    EmitArgs(57, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define PUSH_TO_MEM(offset) \
-    EmitCommand(1, context->result);                                                                            \
-    NEW_ARG(TO_MEM_FLAGS, (ProcStackElem)(offset * ACCURACY), 1, "null", (char*)nullptr);                                          \
-    EmitArgs(1, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define POP_TO_MEM(offset) \
-    EmitCommand(5, context->result);                                                                            \
-    NEW_ARG(TO_MEM_FLAGS, (ProcStackElem)(offset * ACCURACY), 1, "null", (char*)nullptr);                                          \
-    EmitArgs(5, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define POP_TO_REG \
-    EmitCommand(5, context->result);                                                                            \
-    NEW_ARG(REGISTER_FLAGS, 0, 1, "null", (char*)nullptr);                                          \
-    EmitArgs(5, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define IN_TO_MEM(offset) \
-    EmitCommand(13, context->result);                                                                            \
-    NEW_ARG(TO_MEM_FLAGS, (ProcStackElem)(offset * ACCURACY), 1, "null", (char*)nullptr);                                          \
-    EmitArgs(13, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels)
-
-#define SINGULAR_OP(number) \
-    EmitCommand(number, context->result)
+#define SINGULAR_OP(number) EmitCommand(number, context->result)
 
 #define ADD SINGULAR_OP(8)
 #define SUB SINGULAR_OP(12)
@@ -131,6 +79,7 @@ void GenerateCode(Tree* AST) {
 
     CALL("main");
     fprintf(output, "call main\n");
+
     HLT;
     fprintf(output, "hlt\n");
     ASTBypass(AST->root, output, context);
@@ -245,10 +194,10 @@ void ProcessWhile(Node* AST, FILE* output, CodegenContext* context) {
     PUSH_CONST(0);
     fprintf(output, "push 0\n");
 
-    JE("whileend%u", , context->amounts.whileAmount);
+    JE("whileend", context->amounts.whileAmount);
     fprintf(output, "je whileend%u\n", context->amounts.whileAmount);
 
-    LABEL("while%u", , context->amounts.whileAmount);
+    LABEL("while", context->amounts.whileAmount);
     fprintf(output, "while%u:\n", context->amounts.whileAmount);
 
     ASTBypass(AST->right->left, output, context);
@@ -258,10 +207,10 @@ void ProcessWhile(Node* AST, FILE* output, CodegenContext* context) {
     PUSH_CONST(0);
     fprintf(output, "push 0\n");
 
-    JNE("while%u", , context->amounts.whileAmount);
+    JNE("while", context->amounts.whileAmount);
     fprintf(output, "jne while%u\n", context->amounts.whileAmount);
 
-    LABEL("whileend%u", , context->amounts.whileAmount);
+    LABEL("whileend", context->amounts.whileAmount);
     fprintf(output, "whileend%u:\n", context->amounts.whileAmount);
 
     context->amounts.whileAmount++;
@@ -303,15 +252,15 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     fprintf(output, "push %lf\n", toValue);
 
     if (iterValue > 0) {
-        JA("forend%u", ,context->amounts.forAmount);
+        JA("forend", context->amounts.forAmount);
         fprintf(output, "ja forend%u\n", context->amounts.forAmount);
     }
     else {
-        JB("forend%u", ,context->amounts.forAmount);
+        JB("forend", context->amounts.forAmount);
         fprintf(output, "jb forend%u\n", context->amounts.forAmount);
     }
     
-    LABEL("for%u", ,context->amounts.forAmount);
+    LABEL("for", context->amounts.forAmount);
     fprintf(output, "for%u:\n", context->amounts.forAmount);
     
     ASTBypass(AST->right->left, output, context);
@@ -335,15 +284,15 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     fprintf(output, "push %lf\n", toValue);
 
     if (iterValue > 0) {
-        JB("for%u", , context->amounts.forAmount);
+        JB("for", context->amounts.forAmount);
         fprintf(output, "jb for%u\n", context->amounts.forAmount);
     }
     else {
-        JA("for%u", , context->amounts.forAmount);
+        JA("for", context->amounts.forAmount);
         fprintf(output, "ja for%u\n", context->amounts.forAmount);
     }
 
-    LABEL("forend%u", , context->amounts.forAmount);
+    LABEL("forend", context->amounts.forAmount);
     fprintf(output, "forend%u:\n", context->amounts.forAmount);
     
     context->amounts.forAmount++;
@@ -412,22 +361,22 @@ void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
     PUSH_CONST(0);
     fprintf(output, "push 0\n");
 
-    JE("ifelse%u", , ifAmount);
+    JE("ifelse", ifAmount);
     fprintf(output, "je ifelse%u\n", ifAmount);
 
     ASTBypass(AST->right->left, output, context);
 
-    JUMP("ifend%u", , ifAmount);
+    JUMP("ifend", ifAmount);
     fprintf(output, "jump ifend%u\n", ifAmount);
 
-    LABEL("ifelse%u", , ifAmount);
+    LABEL("ifelse", ifAmount);
     fprintf(output, "ifelse%u:\n", ifAmount);
 
     if (AST->right->right != nullptr) {
         ASTBypass(AST->right->right, output, context);
     }
 
-    LABEL("ifend%u", , ifAmount);
+    LABEL("ifend", ifAmount);
     fprintf(output, "ifend%u:\n", ifAmount);
 
     context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
@@ -458,7 +407,7 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
         if (!context->ifInFunction) {
             StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
-            LABEL("%s", ,AST->data.expression);
+            LABEL((const char*)AST->data.expression, -1);
             fprintf(output, "%s:\n", AST->data.expression);
 
             int32_t paramAmount = 0;
@@ -517,7 +466,7 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
 
         EnterFuncVisibilityZone(AST, output, context);
 
-        CALL("%s", , AST->data.expression);
+        CALL((const char*)AST->data.expression);
         fprintf(output, "call %s\n", AST->data.expression);
         ExitFuncVisibilityZone(AST, output, context);
     }
@@ -547,11 +496,11 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
         int32_t stringNum = 0;
 
         if ((stringNum = FindString(AST->data.expression, context)) != -1) {
-            STROUT("str%d", , stringNum);
+            STROUT("str", stringNum);
             fprintf(output, "strout str%d\n", stringNum);
         }
         else {
-            STROUT("str%u", , context->amounts.strAmount);
+            STROUT("str", context->amounts.strAmount);
             fprintf(output, "strout str%u\n", context->amounts.strAmount);
 
             context->stringsArray[context->amounts.strAmount] = AST->data.expression;
@@ -606,22 +555,22 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JB("compareg%u", , context->amounts.compareAmount);
+        JB("compareg", context->amounts.compareAmount);
         fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JUMP("comparezero%u", , context->amounts.compareAmount);
+        JUMP("comparezero", context->amounts.compareAmount);
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        LABEL("compareg%u", , context->amounts.compareAmount);
+        LABEL("compareg", context->amounts.compareAmount);
         fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
         fprintf(output, "push 1\n");
 
-        LABEL("comparezero%u", , context->amounts.compareAmount);
+        LABEL("comparezero", context->amounts.compareAmount);
         fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
@@ -639,22 +588,22 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JB("compareg%u", , context->amounts.compareAmount);
+        JB("compareg", context->amounts.compareAmount);
         fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JUMP("comparezero%u", , context->amounts.compareAmount);
+        JUMP("comparezero", context->amounts.compareAmount);
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        LABEL("compareg%u", , context->amounts.compareAmount);
+        LABEL("compareg", context->amounts.compareAmount);
         fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
         fprintf(output, "push 1\n");
 
-        LABEL("comparezero%u", , context->amounts.compareAmount);
+        LABEL("comparezero", context->amounts.compareAmount);
         fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
@@ -666,22 +615,22 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JA("compareg%u", , context->amounts.compareAmount);
+        JA("compareg", context->amounts.compareAmount);
         fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JUMP("comparezero%u", , context->amounts.compareAmount);
+        JUMP("comparezero", context->amounts.compareAmount);
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        LABEL("compareg%u", , context->amounts.compareAmount);
+        LABEL("compareg", context->amounts.compareAmount);
         fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
         fprintf(output, "push 1\n");
 
-        LABEL("comparezero%u", , context->amounts.compareAmount);
+        LABEL("comparezero", context->amounts.compareAmount);
         fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
@@ -699,22 +648,22 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JA("compareg%u", , context->amounts.compareAmount);
+        JA("compareg", context->amounts.compareAmount);
         fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JUMP("comparezero%u", , context->amounts.compareAmount);
+        JUMP("comparezero", context->amounts.compareAmount);
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        LABEL("compareg%u", , context->amounts.compareAmount);
+        LABEL("compareg", context->amounts.compareAmount);
         fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
         fprintf(output, "push 1\n");
 
-        LABEL("comparezero%u", , context->amounts.compareAmount);
+        LABEL("comparezero", context->amounts.compareAmount);
         fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
@@ -726,22 +675,22 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JE("compareg%u", , context->amounts.compareAmount);
+        JE("compareg", context->amounts.compareAmount);
         fprintf(output, "je compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JUMP("comparezero%u", ,context->amounts.compareAmount);
+        JUMP("comparezero", context->amounts.compareAmount);
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        LABEL("compareg%u", , context->amounts.compareAmount);
+        LABEL("compareg", context->amounts.compareAmount);
         fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
         fprintf(output, "push 1\n");
 
-        LABEL("comparezero%u", , context->amounts.compareAmount);
+        LABEL("comparezero", context->amounts.compareAmount);
         fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
@@ -753,22 +702,22 @@ void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JNE("compareg%u", , context->amounts.compareAmount);
+        JNE("compareg", context->amounts.compareAmount);
         fprintf(output, "jne compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
         fprintf(output, "push 0\n");
 
-        JUMP("comparezero%u", , context->amounts.compareAmount);
+        JUMP("comparezero", context->amounts.compareAmount);
         fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
-        LABEL("compareg%u", , context->amounts.compareAmount);
+        LABEL("compareg", context->amounts.compareAmount);
         fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
         fprintf(output, "push 1\n");
 
-        LABEL("comparezero%u", , context->amounts.compareAmount);
+        LABEL("comparezero", context->amounts.compareAmount);
         fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
@@ -902,7 +851,7 @@ void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     PUSH_CONST(MEMORY_CELL_SIZE * context->offset);
     fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
 
-    PUSH_REG;
+    PUSH_TO_REG;
     fprintf(output, "push bx\n");
 
     ADD;
@@ -919,7 +868,7 @@ void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
 
     context->offset = (!context->offsetStack->size) ? 0 : (uint32_t)(int64_t)StackPop(context->offsetStack);
 
-    PUSH_REG;
+    PUSH_TO_REG;
     fprintf(output, "push bx\n");
 
     PUSH_CONST(MEMORY_CELL_SIZE * context->offset);
@@ -950,10 +899,10 @@ void PrintEndOfProgram(FILE* output, CodegenContext* context) {
     assert(context != nullptr);
 
     for (uint32_t curStr = 0; curStr < context->amounts.strAmount; curStr++) {
-        LABEL("str%u", , curStr);
+        LABEL("str", curStr);
         fprintf(output, "str%u:\n", curStr);
 
-        STRING(context->stringsArray[curStr]);
+        STRING((const char*)context->stringsArray[curStr]);
         fprintf(output, "db %s\n\n", context->stringsArray[curStr]);
     }
 }
@@ -1315,3 +1264,70 @@ void PrintKeyword(Node* node, FILE* output) {
             break;
     }
 }
+
+void NewArgument(Flags flags, int32_t argConstant, int32_t reg, const char labelName[], int32_t labelNum, const char string[], CodegenContext* context) {
+    assert(context   != nullptr);
+
+    context->arguments[context->amounts.argumentsAmount].argFlags   = flags;                              
+    context->arguments[context->amounts.argumentsAmount].argConst   = argConstant;                          
+    context->arguments[context->amounts.argumentsAmount].argReg     = reg;                                
+
+    if (labelName != nullptr) {                                                                 
+        if (labelNum != -1) 
+            sprintf((char*)context->arguments[context->amounts.argumentsAmount].labelName,  "%s%d", labelName, labelNum);   
+        else   
+            sprintf((char*)context->arguments[context->amounts.argumentsAmount].labelName,  "%s", labelName);      
+    }
+    
+    if (string != nullptr)                                                                                                
+        sprintf((char*)context->arguments[context->amounts.argumentsAmount].stringName, "%s", string);              
+                                                                                        
+    context->amounts.argumentsAmount++;
+}
+
+void MakeSomethingWithLabel(int8_t commandNum, const char labelName[], uint32_t labelNum, CodegenContext* context) {
+    assert(labelName != nullptr);
+
+    EmitCommand(commandNum, context->result);                       
+    NewArgument(LABEL_FLAGS, 0, 0, labelName, labelNum, nullptr, context);   
+    EmitArgs(commandNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
+}
+
+void MakeString(const char stringName[], CodegenContext* context) {
+    assert(stringName != nullptr);
+    assert(context    != nullptr);
+
+    NewArgument(STRING_FLAGS, 0, 0, nullptr, 0, stringName, context);                                                           
+    EmitArgs(36, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
+}
+
+void MakeLabel(const char labelName[], int32_t labelNumber, CodegenContext* context) {
+    assert(context   != nullptr);
+    assert(labelName != nullptr);
+
+    NewArgument(LABEL_FLAGS, 0, 0, labelName, labelNumber, (char*)nullptr, context);     
+    EmitArgs(0, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
+}
+
+void DoWithConstant(int8_t cmdNum, double constant, CodegenContext* context) {
+    assert(context != nullptr);
+
+    EmitCommand(cmdNum, context->result);                                                                            
+    NewArgument(CONST_FLAGS, (ProcStackElem)(constant * ACCURACY), 0, nullptr, -1, nullptr, context);                                
+    EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
+}
+
+void DoToRegister(int8_t cmdNum, CodegenContext* context) {
+    EmitCommand(cmdNum, context->result);                                                                            
+    NewArgument(REGISTER_FLAGS, 0, 1, nullptr, -1, nullptr, context);                                                              
+    EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
+}
+
+void DoToMem(int8_t cmdNum, double offset, CodegenContext* context) {
+    assert(context != nullptr);
+
+    EmitCommand(cmdNum, context->result);                                                                            
+    NewArgument(TO_MEM_FLAGS, (ProcStackElem)(offset * ACCURACY), 1, nullptr, -1, (char*)nullptr, context);                                          
+    EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
+}
+
