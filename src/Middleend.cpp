@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     ProcessMiddleendArguments(argc, argv);
 
     char treeName[MAX_FILE_NAME_LENGTH] = "";
-    
+
     if (outputName == nullptr)
         GenerateOutputName(ASM_NAME, treeName, ASM_PATH, ASM_OUTPUT_FORMAT);
     else 
@@ -104,7 +104,7 @@ void GenerateCode(Tree* AST) {
     StackCtor(offsetStack);
     char endName[MAX_FILE_NAME_LENGTH] = "";
 
-    if (isLog) GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    if (!isLog) GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
     else strcat(endName, outputName);
     FILE* output = fopen(endName, "w");
 

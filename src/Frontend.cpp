@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     Tokens tokens   = {};
     ProcessMiddleendArguments(argc, argv);
 
-    MakeText(&expression, outputFrontFile);
+    MakeText(&expression, inputFrontFile);
     MakeText(&keywords, KEYS_FILE);
 
     AnalyseText(&expression, &tokens, &keywords);
@@ -41,7 +41,7 @@ void ProcessMiddleendArguments(int argc, char* argv[]) {
         }
 
         if (!strcmp(argv[curArg], "-o")) {
-            outputFrontFile = argv[curArg + 1];
+            inputFrontFile = argv[curArg + 1];
         }
     }
 }

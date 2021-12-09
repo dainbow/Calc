@@ -75,7 +75,6 @@ Node* ReadTreeFromDisk(Text* treeText, uint64_t* curByte) {
 
     Node* retValue = 0;
 
-    printf("curByte is %llu\n", *curByte);
     NodeDataTypes curType = *(NodeDataTypes*)(treeText->buffer + *curByte);
     (*curByte)++;
 
@@ -112,23 +111,19 @@ Node* ReadTreeFromDisk(Text* treeText, uint64_t* curByte) {
     *curByte += sizeof(Node*);
 
     retValue = MakeNewNode(curData.operation, curData.number, curData.expression, curType, 0, 0);
-    printf("Made node %p with type %d. OP is %d[%c], num is %lf\n", retValue, curType, curData.operation, curData.operation, curData.number);
     
     if ((leftPtr != 0) &&
         (rightPtr != 0)) {
         retValue->left  = ReadTreeFromDisk(treeText, curByte);
         retValue->right = ReadTreeFromDisk(treeText, curByte);
-        printf("Both aren't null so them are %p and %p\n", retValue->left, retValue->right);
     }
     else if (leftPtr != 0) {
         retValue->left  = ReadTreeFromDisk(treeText, curByte);
-        printf("Leftptr isn't null so it's left is %p\n", retValue->left);
     }
     else if (rightPtr != 0) {
         retValue->right = ReadTreeFromDisk(treeText, curByte);
-        printf("Rightptr isn't null so it's right is %p\n", retValue->right);
     }
     
-
+    assert(retValue != nullptr);
     return retValue;
 }

@@ -368,7 +368,6 @@ int32_t CutEqualNodes(Context context) {
         CUT_EQUAL_NODES(right, left, 0)
     }
     else if (context.node->data.operation == (int32_t)MUL_OP) {
-        printf("FOLDING MUL\n");
         CUT_EQUAL_NODES(left, right, 1)
         CUT_EQUAL_NODES(right, left, 1)
     }
