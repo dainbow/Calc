@@ -35,7 +35,7 @@
         assert(!"OK" && "Verify failed");                                                     \
     }
 
-#include "Tree.h"
+#include "../Tree/Tree.h"
 
 typedef uint32_t canary;
 typedef uint64_t hashValue;

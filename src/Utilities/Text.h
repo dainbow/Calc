@@ -7,7 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "commands.h"
+#include "../Middleend/commands.h"
 
 struct String {
     int8_t *value;

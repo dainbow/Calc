@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "Text.h"
+#include "../Utilities/Text.h"
 
 typedef int32_t TreeElem;
 #define TREE_TYPE "%s"

@@ -535,20 +535,6 @@ Node* OptimisationAfterDiff(Node* node) {
     return node;
 }
 
-FILE* StartTex(Tree* tree, char** outputName, DiffContext* diffContext) {
-    assert(tree != nullptr);
-    
-    *outputName = MakeLatexTitle(tree, TEX_NAME, diffContext);
-    assert(*outputName != nullptr);
-
-    FILE* output = fopen(*outputName, "a");
-    assert(output != nullptr);
-
-    PrintBigNodes(output, diffContext);
-
-    return output;
-}
-
 bool CheckDoubleEquality(double first, double second) {
     assert(first  != NAN);
     assert(second != NAN);

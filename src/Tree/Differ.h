@@ -3,11 +3,10 @@
 #include <windows.h>
 #include <stdlib.h>
 
-#include "Tree.h"
-#include "Graph.h"
-#include "Text.h"
-#include "Stack.h"
-#include "Latex.h"
+#include "../Tree/Tree.h"
+#include "../Tree/Graph.h"
+#include "../Utilities/Text.h"
+#include "../Utilities/Stack.h"
 
 #define MAKLOREN 0
 
@@ -44,12 +43,6 @@ int32_t CutMinusOneNodes(Node* node);
 
 int32_t CheckForVars(Node* node);
 
-FILE* StartTex(Tree* tree, char** outputName, DiffContext* diffContext);
-void LogDiffProcessToTex(Node* curNode, Node* diffNode, FILE* output, DiffContext* diffContext);
-void StopTex(FILE* output, char* outputName, Node* beginNode, Node* node, DiffContext* diffContext);
-
 void SubstituteVars(Node* node, int8_t* varData, int32_t value);
-
-void MakeMakloren(FILE* output, Node* node, int32_t accuracy, int8_t* variable, DiffContext* diffContext);
 
 bool CheckDoubleEquality(double first, double second);

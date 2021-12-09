@@ -668,7 +668,6 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
         }
     }
 
-    printf("TOKEN'S AMOUNT IS %I64lld\n", tokensCounter + 1);
     //tokens->array    = (Node*)realloc(tokens->array, tokensCounter + 3);
     tokens->database = (int8_t*)realloc(tokens->database, databaseCounter + 3);
 }

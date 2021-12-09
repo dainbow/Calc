@@ -1,59 +1,6 @@
-/*  G::= F
-    F::= V 'with' {V,}* begin {K | S}* 'lilEnd'
-    K::= VasyaSniff | NextSniff | Homyak | Hire 
-    S::= (V 'in' DIFF) | (DIFF 'to' V) | DIFF EOL_OP
-    E::= STR | T{[+-]T}*
-    T::= {-}DEG{[*\]DEG}*
-    DEG::= P{^P}
-    P::= 'LEFT_ROUND_OP' DIFF 'RIGHT_ROUND_OP' | V 'LEFT_ROUND_OP' DIFF {,DIFF}* 'RIGHT_ROUND_OP' | V | N
+#include "TreeDiskUtilities.h"
 
-    STR::= TYPE_STRING
-    V::= TYPE_VAR
-    N::= TYPE_CONST
-*/
-
-//! Массивы, глобалки, декомпилятор
-
-#include "Calc.h"
-
-int main(int /*argc*/, char* argv[]) {
-    Text expression = {};
-    Text keywords   = {};
-    Tokens tokens   = {};
-
-    MakeText(&expression, argv[1]);
-    MakeText(&keywords, KEYS_FILE);
-
-    AnalyseText(&expression, &tokens, &keywords);
-    
-    TreeCtor(AST);
-    MakeAST(&AST, &tokens);
-
-    DropTreeOnDisk(&AST);
-    FrontendMinusOne(&AST);
-    MakeTreeGraph(&AST, G_STANDART_NAME);
-
-    char treeName[MAX_FILE_NAME_LENGTH] = "";
-    GenerateOutputName(ASM_NAME, treeName, ASM_PATH, ASM_OUTPUT_FORMAT);
-
-    strcat(treeName, TREE_OUTPUT_FORMAT);
-    Text treeText = {};
-
-    printf("Scanning tree %s\n", treeName);
-    ReadTextFromFile(&treeText, treeName);
-
-    TreeCtor(ASTREADED);
-
-    uint64_t curByte = 0;
-    ASTREADED.root   = ReadTreeFromDisk(&treeText, &curByte);
-    MakeTreeGraph(&ASTREADED, G_STANDART_NAME);
-
-    GenerateCode(&AST);
-
-    
-
-    printf("OK\n");
-}
+#include "../Middleend/Middleend.h"
 
 void DropTreeOnDisk(Tree* AST) {
     assert(AST != nullptr);
@@ -64,18 +11,18 @@ void DropTreeOnDisk(Tree* AST) {
     strcat(endName, TREE_OUTPUT_FORMAT);
     FILE* output = fopen(endName, "w");
 
-    CompileResult outputB = {};
+    BinaryArr outputB = {};
     outputB.bytesArray    = (int8_t*)calloc(MAX_OUTPUTFILE_LENGTH, sizeof(outputB.bytesArray[0]));
 
     BypassTreeToDiskDrop(AST->root, &outputB);
 
-    printf("Tree droped in '%s', %llu\n", endName, fwrite(outputB.bytesArray, 
+    printf("Tree droped in '%s', size if %llu\n", endName, fwrite(outputB.bytesArray, 
                                       sizeof(outputB.bytesArray[0]), outputB.bytesCount, output));
 
     fclose(output);
 }
 
-void BypassTreeToDiskDrop(Node* node, CompileResult* output) {
+void BypassTreeToDiskDrop(Node* node, BinaryArr* output) {
     assert(node != nullptr);
 
     *(NodeDataTypes*)(output->bytesArray + output->bytesCount) = node->type;

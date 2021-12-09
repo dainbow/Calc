@@ -1,4 +1,4 @@
-#include "Codegen.h"
+#include "./Middleend/Middleend.h"
 
 #define LABEL_FLAGS     {0, 1, 0, 0, 0}
 #define NONE_FLAGS      {0, 0, 0, 0, 0}
@@ -50,6 +50,53 @@
 #define DIV SINGULAR_OP(20)
 #define POW SINGULAR_OP(52)
 
+    bool isLog       = 0;
+    bool isShowTree  = 0;
+    char *outputName = 0;
+
+int main(int argc, char* argv[]) {
+    ProcessMiddleendArguments(argc, argv);
+
+    char treeName[MAX_FILE_NAME_LENGTH] = "";
+    
+    if (outputName == nullptr)
+        GenerateOutputName(ASM_NAME, treeName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    else 
+        strcat(treeName, outputName);
+    strcat(treeName, TREE_OUTPUT_FORMAT);
+    
+    Text treeText = {};
+    ReadTextFromFile(&treeText, treeName);
+
+    TreeCtor(ASTREADED);
+
+    uint64_t curByte = 0;
+    ASTREADED.root   = ReadTreeFromDisk(&treeText, &curByte);
+
+    if (isShowTree) {
+        MakeTreeGraph(&ASTREADED, G_STANDART_NAME);
+    }
+
+    GenerateCode(&ASTREADED);
+
+    TreeDtor(&ASTREADED);
+}
+
+void ProcessMiddleendArguments(int argc, char* argv[]) {
+    for (int32_t curArg = 1; curArg < argc; curArg++) {
+        if (!strcmp((const char*)argv[curArg], "-asmS")) {
+            isLog = 1;
+        }
+
+        if (!strcmp((const char*)argv[curArg], "-middleG")) {
+            isShowTree = 1;
+        }
+
+        if (!strcmp((const char*)argv[curArg], "-o")) {
+            outputName = argv[curArg + 1];
+        }
+    }
+}
 
 void GenerateCode(Tree* AST) {
     assert(AST != nullptr);
@@ -57,7 +104,8 @@ void GenerateCode(Tree* AST) {
     StackCtor(offsetStack);
     char endName[MAX_FILE_NAME_LENGTH] = "";
 
-    GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    if (isLog) GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    else strcat(endName, outputName);
     FILE* output = fopen(endName, "w");
 
     Labels labels = {};
@@ -78,10 +126,10 @@ void GenerateCode(Tree* AST) {
     FillArguments(context->arguments);
 
     CALL("main");
-    fprintf(output, "call main\n");
+    if (isLog) fprintf(output, "call main\n");
 
     HLT;
-    fprintf(output, "hlt\n");
+    if (isLog) fprintf(output, "hlt\n");
     ASTBypass(AST->root, output, context);
     PrintEndOfProgram(output, context);
 
@@ -105,18 +153,18 @@ void GenerateCode(Tree* AST) {
 
     context->labels->isAllDataRead = 1;
     CALL("main");
-    fprintf(output, "call main\n");
+    if (isLog) fprintf(output, "call main\n");
     HLT;
-    fprintf(output, "hlt\n");
+    if (isLog) fprintf(output, "hlt\n");
     ASTBypass(AST->root, output, context);
     PrintEndOfProgram(output, context);
-    fclose(output);
+    if (isLog) fclose(output);
 
     strcat(endName, ASM_OUTPUT_FORMAT);
     FILE* outputd = fopen(endName, "wb");
-    printf("I wrote %llu signature bytes\n",  fwrite(SIGNATURE, 1, SIGNATURE_SIZE, outputd));
+    printf("I wrote %llu signature bytes to %s\n",  fwrite(SIGNATURE, 1, SIGNATURE_SIZE, outputd), endName);
     printf("I wrote %llu bytes from array\n", fwrite(context->result->bytesArray, 1, context->result->bytesCount, outputd));
-    fclose(outputd);
+    if (isLog) fclose(outputd);
 
     StackDtor(&offsetStack2);
     
@@ -124,7 +172,6 @@ void GenerateCode(Tree* AST) {
 
 void ASTBypass(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     if (SkipConk(AST, output, context))
@@ -141,7 +188,6 @@ void ASTBypass(Node* AST, FILE* output, CodegenContext* context) {
 
 bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     if (AST->type == NodeDataTypes::TYPE_KEYWORD) {
@@ -171,7 +217,7 @@ bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
                 ProcessTo(AST, output, context);
                 break;
             default:
-                fprintf(stderr, "UNKNOWN KEYWORD %d\n", AST->data.operation);
+                if (isLog) fprintf(stderr, "UNKNOWN KEYWORD %d\n", AST->data.operation);
                 abort();
                 break;
         }
@@ -184,7 +230,6 @@ bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context) {
 
 void ProcessWhile(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
@@ -192,26 +237,26 @@ void ProcessWhile(Node* AST, FILE* output, CodegenContext* context) {
     PushNode(AST->left, output, context);
 
     PUSH_CONST(0);
-    fprintf(output, "push 0\n");
+    if (isLog) fprintf(output, "push 0\n");
 
     JE("whileend", context->amounts.whileAmount);
-    fprintf(output, "je whileend%u\n", context->amounts.whileAmount);
+    if (isLog) fprintf(output, "je whileend%u\n", context->amounts.whileAmount);
 
     LABEL("while", context->amounts.whileAmount);
-    fprintf(output, "while%u:\n", context->amounts.whileAmount);
+    if (isLog) fprintf(output, "while%u:\n", context->amounts.whileAmount);
 
     ASTBypass(AST->right->left, output, context);
 
     PushNode(AST->left, output, context);
 
     PUSH_CONST(0);
-    fprintf(output, "push 0\n");
+    if (isLog) fprintf(output, "push 0\n");
 
     JNE("while", context->amounts.whileAmount);
-    fprintf(output, "jne while%u\n", context->amounts.whileAmount);
+    if (isLog) fprintf(output, "jne while%u\n", context->amounts.whileAmount);
 
     LABEL("whileend", context->amounts.whileAmount);
-    fprintf(output, "whileend%u:\n", context->amounts.whileAmount);
+    if (isLog) fprintf(output, "whileend%u:\n", context->amounts.whileAmount);
 
     context->amounts.whileAmount++;
     context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
@@ -219,7 +264,6 @@ void ProcessWhile(Node* AST, FILE* output, CodegenContext* context) {
 
 void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
@@ -240,60 +284,60 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
     }
 
     PUSH_CONST(fromValue);
-    fprintf(output, "push %lf\n", fromValue);
+    if (isLog) fprintf(output, "push %lf\n", fromValue);
 
     POP_TO_MEM(MEMORY_CELL_SIZE * fromOffset);
-    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
+    if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
 
     PUSH_TO_MEM(MEMORY_CELL_SIZE * fromOffset);
-    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
+    if (isLog) fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * fromOffset);
 
     PUSH_TO_MEM(toValue);
-    fprintf(output, "push %lf\n", toValue);
+    if (isLog) fprintf(output, "push %lf\n", toValue);
 
     if (iterValue > 0) {
         JA("forend", context->amounts.forAmount);
-        fprintf(output, "ja forend%u\n", context->amounts.forAmount);
+        if (isLog) fprintf(output, "ja forend%u\n", context->amounts.forAmount);
     }
     else {
         JB("forend", context->amounts.forAmount);
-        fprintf(output, "jb forend%u\n", context->amounts.forAmount);
+        if (isLog) fprintf(output, "jb forend%u\n", context->amounts.forAmount);
     }
     
     LABEL("for", context->amounts.forAmount);
-    fprintf(output, "for%u:\n", context->amounts.forAmount);
+    if (isLog) fprintf(output, "for%u:\n", context->amounts.forAmount);
     
     ASTBypass(AST->right->left, output, context);
 
     PUSH_TO_MEM(MEMORY_CELL_SIZE*fromOffset);
-    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    if (isLog) fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
 
     PUSH_CONST(iterValue);
-    fprintf(output, "push %lf\n", iterValue);
+    if (isLog) fprintf(output, "push %lf\n", iterValue);
 
     ADD;
-    fprintf(output, "add\n");
+    if (isLog) fprintf(output, "add\n");
 
     POP_TO_MEM(MEMORY_CELL_SIZE * fromOffset);
-    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
 
     PUSH_TO_MEM(MEMORY_CELL_SIZE * fromOffset);
-    fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
+    if (isLog) fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE*fromOffset);
 
     PUSH_CONST(toValue);
-    fprintf(output, "push %lf\n", toValue);
+    if (isLog) fprintf(output, "push %lf\n", toValue);
 
     if (iterValue > 0) {
         JB("for", context->amounts.forAmount);
-        fprintf(output, "jb for%u\n", context->amounts.forAmount);
+        if (isLog) fprintf(output, "jb for%u\n", context->amounts.forAmount);
     }
     else {
         JA("for", context->amounts.forAmount);
-        fprintf(output, "ja for%u\n", context->amounts.forAmount);
+        if (isLog) fprintf(output, "ja for%u\n", context->amounts.forAmount);
     }
 
     LABEL("forend", context->amounts.forAmount);
-    fprintf(output, "forend%u:\n", context->amounts.forAmount);
+    if (isLog) fprintf(output, "forend%u:\n", context->amounts.forAmount);
     
     context->amounts.forAmount++;
     context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
@@ -301,13 +345,12 @@ void ProcessFor(Node* AST, FILE* output, CodegenContext* context) {
 
 void ProcessGobble(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     uint32_t varOffset = MakeLocalVar(AST->left->data.expression, context);
 
     IN_TO_MEM(MEMORY_CELL_SIZE * varOffset);
-    fprintf(output, "in {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+    if (isLog) fprintf(output, "in {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
 
     if (AST->right != nullptr) {
         ProcessGobble(AST->right, output, context);
@@ -316,42 +359,38 @@ void ProcessGobble(Node* AST, FILE* output, CodegenContext* context) {
 
 void ProcessReturn(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     ASTBypass(AST->left, output, context);
 
     RET;
-    fprintf(output, "ret\n");
+    if (isLog) fprintf(output, "ret\n");
 }
 
 void ProcessTo(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     uint32_t varOffset = MakeLocalVar(AST->right->data.expression, context);
     ASTBypass(AST->left, output, context);
 
     POP_TO_MEM(MEMORY_CELL_SIZE * varOffset);
-    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+    if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
 }
 
 void ProcessIn(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     uint32_t varOffset = MakeLocalVar(AST->left->data.expression, context);
     ASTBypass(AST->right, output, context);
 
     POP_TO_MEM(MEMORY_CELL_SIZE * varOffset);
-    fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+    if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
 }
 
 void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
     StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
     uint32_t ifAmount = context->amounts.ifAmount++;
@@ -359,38 +398,37 @@ void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
     PushNode(AST->left, output, context);
     
     PUSH_CONST(0);
-    fprintf(output, "push 0\n");
+    if (isLog) fprintf(output, "push 0\n");
 
     JE("ifelse", ifAmount);
-    fprintf(output, "je ifelse%u\n", ifAmount);
+    if (isLog) fprintf(output, "je ifelse%u\n", ifAmount);
 
     ASTBypass(AST->right->left, output, context);
 
     JUMP("ifend", ifAmount);
-    fprintf(output, "jump ifend%u\n", ifAmount);
+    if (isLog) fprintf(output, "jump ifend%u\n", ifAmount);
 
     LABEL("ifelse", ifAmount);
-    fprintf(output, "ifelse%u:\n", ifAmount);
+    if (isLog) fprintf(output, "ifelse%u:\n", ifAmount);
 
     if (AST->right->right != nullptr) {
         ASTBypass(AST->right->right, output, context);
     }
 
     LABEL("ifend", ifAmount);
-    fprintf(output, "ifend%u:\n", ifAmount);
+    if (isLog) fprintf(output, "ifend%u:\n", ifAmount);
 
     context->offset = (uint32_t)(int64_t)StackPop(context->offsetStack);
 }
 
 void ProcessCry(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     ASTBypass(AST->left, output, context);
     if (AST->left->type != NodeDataTypes::TYPE_STR) {
         OUT_CONST(1);
-        fprintf(output, "out 1\n");
+        if (isLog) fprintf(output, "out 1\n");
     }
 
     if (AST->right != nullptr) {
@@ -400,7 +438,6 @@ void ProcessCry(Node* AST, FILE* output, CodegenContext* context) {
 
 bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     if (AST->type == NodeDataTypes::TYPE_FUNC) {
@@ -408,7 +445,7 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
             StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
             LABEL((const char*)AST->data.expression, -1);
-            fprintf(output, "%s:\n", AST->data.expression);
+            if (isLog) fprintf(output, "%s:\n", AST->data.expression);
 
             int32_t paramAmount = 0;
             if (AST->left != nullptr) {
@@ -421,7 +458,7 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
             ASTBypass(AST->right, output, context);
 
             RET;
-            fprintf(output, "ret\n");
+            if (isLog) fprintf(output, "ret\n");
 
             context->offset       = (uint32_t)(int64_t)StackPop(context->offsetStack);
             context->ifInFunction = 0;
@@ -445,7 +482,6 @@ bool ProcessFunction(Node* AST, FILE* output, CodegenContext* context) {
 
 int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     int32_t paramAmount = 0;
@@ -467,7 +503,7 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
         EnterFuncVisibilityZone(AST, output, context);
 
         CALL((const char*)AST->data.expression);
-        fprintf(output, "call %s\n", AST->data.expression);
+        if (isLog) fprintf(output, "call %s\n", AST->data.expression);
         ExitFuncVisibilityZone(AST, output, context);
     }
 
@@ -476,7 +512,6 @@ int32_t ExecuteFunction(Node* AST, FILE* output, CodegenContext* context) {
 
 void PushNode(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     if (AST->left != nullptr) {
@@ -489,7 +524,7 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
 
     if (AST->type == NodeDataTypes::TYPE_CONST) {
         PUSH_CONST(AST->data.number);
-        fprintf(output, "push %f\n", (double)AST->data.number);
+        if (isLog) fprintf(output, "push %f\n", (double)AST->data.number);
     }
 
     if (AST->type == NodeDataTypes::TYPE_STR) {
@@ -497,11 +532,11 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
 
         if ((stringNum = FindString(AST->data.expression, context)) != -1) {
             STROUT("str", stringNum);
-            fprintf(output, "strout str%d\n", stringNum);
+            if (isLog) fprintf(output, "strout str%d\n", stringNum);
         }
         else {
             STROUT("str", context->amounts.strAmount);
-            fprintf(output, "strout str%u\n", context->amounts.strAmount);
+            if (isLog) fprintf(output, "strout str%u\n", context->amounts.strAmount);
 
             context->stringsArray[context->amounts.strAmount] = AST->data.expression;
             context->amounts.strAmount++;
@@ -514,7 +549,7 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
             assert(0 && "UNKNOWN VAR");
 
         PUSH_TO_MEM(MEMORY_CELL_SIZE * varOffset);
-        fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+        if (isLog) fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
     }
 
     if (AST->type == NodeDataTypes::TYPE_OP) {
@@ -524,201 +559,200 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
 
 void PrintOperation(Node* node, FILE* output, CodegenContext* context) {
     assert(node    != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     switch (node->data.operation) {
     case ADD_OP:
         ADD;
-        fprintf(output, "add\n");
+        if (isLog) fprintf(output, "add\n");
         break;
     case SUB_OP:
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
         break;
     case DIV_OP:
         DIV;
-        fprintf(output, "div\n");
+        if (isLog) fprintf(output, "div\n");
         break;
     case MUL_OP:
         MUL;
-        fprintf(output, "mul\n");
+        if (isLog) fprintf(output, "mul\n");
         break;
     case POW_OP:
         POW;
-        fprintf(output, "pow\n");
+        if (isLog) fprintf(output, "pow\n");
         break;
     case L_OP:
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JB("compareg", context->amounts.compareAmount);
-        fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JUMP("comparezero", context->amounts.compareAmount);
-        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
         LABEL("compareg", context->amounts.compareAmount);
-        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         LABEL("comparezero", context->amounts.compareAmount);
-        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
         break;
     case LEQ_OP:
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         ADD;
-        fprintf(output, "add\n");
+        if (isLog) fprintf(output, "add\n");
 
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JB("compareg", context->amounts.compareAmount);
-        fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jb compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JUMP("comparezero", context->amounts.compareAmount);
-        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
         LABEL("compareg", context->amounts.compareAmount);
-        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         LABEL("comparezero", context->amounts.compareAmount);
-        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
         break;
     case G_OP:
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JA("compareg", context->amounts.compareAmount);
-        fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JUMP("comparezero", context->amounts.compareAmount);
-        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
         LABEL("compareg", context->amounts.compareAmount);
-        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         LABEL("comparezero", context->amounts.compareAmount);
-        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
         break;
     case GEQ_OP:
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JA("compareg", context->amounts.compareAmount);
-        fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "ja compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JUMP("comparezero", context->amounts.compareAmount);
-        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
         LABEL("compareg", context->amounts.compareAmount);
-        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         LABEL("comparezero", context->amounts.compareAmount);
-        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
         break;
     case DEQ_OP:
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JE("compareg", context->amounts.compareAmount);
-        fprintf(output, "je compareg%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "je compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JUMP("comparezero", context->amounts.compareAmount);
-        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
         LABEL("compareg", context->amounts.compareAmount);
-        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         LABEL("comparezero", context->amounts.compareAmount);
-        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
         break;
     case NEQ_OP:
         SUB;
-        fprintf(output, "sub\n");
+        if (isLog) fprintf(output, "sub\n");
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JNE("compareg", context->amounts.compareAmount);
-        fprintf(output, "jne compareg%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jne compareg%u\n", context->amounts.compareAmount);
 
         PUSH_CONST(0);
-        fprintf(output, "push 0\n");
+        if (isLog) fprintf(output, "push 0\n");
 
         JUMP("comparezero", context->amounts.compareAmount);
-        fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "jump comparezero%u\n", context->amounts.compareAmount);
 
         LABEL("compareg", context->amounts.compareAmount);
-        fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "compareg%u:\n", context->amounts.compareAmount);
 
         PUSH_CONST(1);
-        fprintf(output, "push 1\n");
+        if (isLog) fprintf(output, "push 1\n");
 
         LABEL("comparezero", context->amounts.compareAmount);
-        fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
+        if (isLog) fprintf(output, "comparezero%u:\n", context->amounts.compareAmount);
 
         context->amounts.compareAmount++;
         break;
@@ -773,7 +807,7 @@ int32_t ProcessFuncArguments(Node* node, FILE* output, CodegenContext* context) 
 
     if (node->left != nullptr) {
         POP_TO_MEM(MEMORY_CELL_SIZE * rememberOffset);
-        fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * rememberOffset);
+        if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * rememberOffset);
     }
 
     return paramAmount;
@@ -820,7 +854,6 @@ void CheckFuncRepetitions(int8_t* name, CodegenContext* context) {
 
 bool SkipConk(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     if (((AST->type == NodeDataTypes::TYPE_UNO)       &&
@@ -843,42 +876,40 @@ bool SkipConk(Node* AST, FILE* output, CodegenContext* context) {
 
 void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     StackPush(context->offsetStack, (StackElem)(int64_t)context->offset);
 
     PUSH_CONST(MEMORY_CELL_SIZE * context->offset);
-    fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
+    if (isLog) fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
 
     PUSH_TO_REG;
-    fprintf(output, "push bx\n");
+    if (isLog) fprintf(output, "push bx\n");
 
     ADD;
-    fprintf(output, "add\n");
+    if (isLog) fprintf(output, "add\n");
 
     POP_TO_REG;
-    fprintf(output, "pop bx\n");
+    if (isLog) fprintf(output, "pop bx\n");
 }
 
 void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     context->offset = (!context->offsetStack->size) ? 0 : (uint32_t)(int64_t)StackPop(context->offsetStack);
 
     PUSH_TO_REG;
-    fprintf(output, "push bx\n");
+    if (isLog) fprintf(output, "push bx\n");
 
     PUSH_CONST(MEMORY_CELL_SIZE * context->offset);
-    fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
+    if (isLog) fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
 
     SUB;
-    fprintf(output, "sub\n");
+    if (isLog) fprintf(output, "sub\n");
 
     POP_TO_REG;
-    fprintf(output, "pop bx\n");
+    if (isLog) fprintf(output, "pop bx\n");
 }
 
 int32_t FindString(int8_t* name, CodegenContext* context) {
@@ -895,373 +926,14 @@ int32_t FindString(int8_t* name, CodegenContext* context) {
 }
 
 void PrintEndOfProgram(FILE* output, CodegenContext* context) {
-    assert(output  != nullptr);
     assert(context != nullptr);
 
     for (uint32_t curStr = 0; curStr < context->amounts.strAmount; curStr++) {
         LABEL("str", curStr);
-        fprintf(output, "str%u:\n", curStr);
+        if (isLog) fprintf(output, "str%u:\n", curStr);
 
         STRING((const char*)context->stringsArray[curStr]);
-        fprintf(output, "db %s\n\n", context->stringsArray[curStr]);
-    }
-}
-
-void FrontendMinusOne(Tree* AST) {
-    assert(AST != nullptr);
-
-    char endName[MAX_FILE_NAME_LENGTH] = "";
-    GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
-
-    strcat(endName, ASM_REVERSED_FORMAT);
-    FILE* outputReversed = fopen(endName, "w");
-
-    PrintAST(AST->root, outputReversed);
-    fprintf(outputReversed, "bigEnd\n");
-
-    fclose(outputReversed);
-}
-
-void PrintAST(Node* node, FILE* output) {
-    assert(node    != nullptr);
-    assert(output != nullptr);
-
-    switch (node->type) {
-        case NodeDataTypes::TYPE_FUNC:
-            PrintFunction(node, output);
-            break;
-        case NodeDataTypes::TYPE_KEYWORD:
-            PrintKeyword(node, output);
-            break;
-        case NodeDataTypes::TYPE_UNO: 
-        case NodeDataTypes::TYPE_OP:
-            PrintOperationMinus1(node, output);
-            break;
-        case NodeDataTypes::TYPE_STR:
-            PrintString(node, output);
-            break;
-        case NodeDataTypes::TYPE_VAR:
-            fprintf(output, "%s ", node->data.expression);
-            break;
-        case NodeDataTypes::TYPE_CONST:
-            fprintf(output, "%lf ", node->data.number);
-            break;
-        case NodeDataTypes::TYPE_UNKNOWN:
-            assert(FAIL && "TYPE IS UNKNOWN");
-            break;
-        default:
-            assert(FAIL && "UNKNOWN TYPE");
-            break;
-    }
-}
-
-void PrintString(Node* node, FILE* output) {
-    assert(node   != nullptr);
-    assert(output != nullptr);
-
-    fprintf(output, "\"%s\" ", node->data.expression);
-}
-
-#define BRACKETS_IF(DISTONATION, BRACKETS_TYPE)                             \
-    if ((node-> DISTONATION ->type == NodeDataTypes::TYPE_OP) &&                           \
-        (GetOperationPriority(node-> DISTONATION-> data.operation) <        \
-        GetOperationPriority(node->data.operation))) {                      \
-        fprintf(output, BRACKETS_TYPE);                                     \
-    }
-
-void PrintOperationMinus1(Node* node, FILE* output) {
-    assert(node   != nullptr);
-    assert(output != nullptr);
-
-    if (node->left != nullptr) {
-        BRACKETS_IF(left, "(")
-
-        PrintAST(node->left, output);
-
-        BRACKETS_IF(left, ")")
-    }
-
-    switch (node->data.operation) {
-        case COMMA_OP:
-            if ((node->left != nullptr) && (node->right != nullptr))
-                fprintf(output, ", ");
-            break;
-        case ADD_OP:
-            fprintf(output, "+ ");
-            break;
-        case SUB_OP: 
-            fprintf(output, "- ");
-            break;
-        case MUL_OP:
-            fprintf(output, "* ");
-            break;
-        case DIV_OP: 
-            fprintf(output, "/ ");
-            break;
-        case POW_OP:
-            fprintf(output, "^ ");
-            break;
-        case NON_OP:
-            fprintf(output, "! ");
-            break;          
-        case L_OP:    
-            fprintf(output, "< ");
-            break;
-        case LEQ_OP:
-            fprintf(output, "<= ");
-            break;
-        case G_OP:
-            fprintf(output, "> ");
-            break;
-        case GEQ_OP:
-            fprintf(output, ">= ");
-            break;
-        case EQ_OP:
-            fprintf(output, "= ");
-            break;
-        case DEQ_OP:
-            fprintf(output, "== ");
-            break;
-        case NEQ_OP:
-            fprintf(output, "!= ");
-            break;
-        case LEFT_ROUND_OP: 
-            fprintf(output, "(");
-            break;
-        case RIGHT_ROUND_OP:
-            fprintf(output, ") ");
-            break;
-        case LEFT_SQR_OP:
-            fprintf(output, "[");
-            break;
-        case RIGHT_SQR_OP:
-            fprintf(output, "] ");
-            break;
-        case LEFT_CUR_OP:
-            fprintf(output, "{");
-            break;
-        case RIGHT_CUR_OP:
-            fprintf(output, "} ");
-            break;
-        case EOL_OP:
-            if  (!((node->left->type == NodeDataTypes::TYPE_KEYWORD)       &&
-                ((node->left->data.operation == KEY_FOR)    ||
-                 (node->left->data.operation == KEY_CRY)    ||
-                 (node->left->data.operation == KEY_GOBBLE) ||
-                 (node->left->data.operation == KEY_IF))))
-                fprintf(output, "$\n");
-            break;
-        default:
-            assert(FAIL && "UNKNOWN OPERATOR");
-            break;
-    }
-
-    if (node->right != nullptr) {
-        BRACKETS_IF(right, "(")
-
-        PrintAST(node->right, output);
-
-        BRACKETS_IF(right, ")")
-    }
-}
-
-int32_t GetOperationPriority(int8_t operation) {
-    switch (operation) {
-        case POW_OP:
-            return 4;
-        case MUL_OP:
-        case DIV_OP:
-            return 3;
-        case ADD_OP:
-        case SUB_OP:
-            return 2;
-        default:
-            return 1;
-            break;
-    }
-}
-
-void PrintFunction(Node* node, FILE* output) {
-    assert(node   != nullptr);
-    assert(output != nullptr);
-
-    if ((node->left  == nullptr) &&
-        (node->right == nullptr)) {
-        fprintf(output, "%s() ", node->data.expression);
-    }
-    else if (node->left != nullptr) {
-        if ((node->left->type           == NodeDataTypes::TYPE_KEYWORD) &&
-            (node->left->data.operation == KEY_WITH)) {
-            fprintf(output, "%s with ", node->data.expression);
-            
-            PrintAST(node->left->left, output);
-            if (node->left->right != nullptr) {
-                fprintf(output, ", ");
-                PrintAST(node->left->right, output);
-            }
-
-            fprintf(output, "begin \n");
-
-            PrintAST(node->right, output);
-        }
-        else {
-            fprintf(output, "%s( ", node->data.expression);
-            
-            PrintAST(node->left,  output);
-            if (node->right != nullptr) {
-                fprintf(output, ", ");
-                PrintAST(node->right, output);
-            }
-
-            fprintf(output, ")");
-        }
-    }
-    else {
-        fprintf(output, "%s ", node->data.expression);  
-        fprintf(output, "begin \n");
-
-        PrintAST(node->right, output);
-    }
-}
-
-void PrintKeyword(Node* node, FILE* output) {
-    assert(node   != nullptr);
-    assert(output != nullptr);
-
-    switch(node->data.operation) {
-        case KEY_IF:
-            fprintf(output, "vasyaSniff ");
-            PrintAST(node->left, output);
-
-            fprintf(output, "begin\n");
-
-            PrintAST(node->right->left, output);
-            fprintf(output, "lilEnd\n");
-            
-            if (node->right->right != nullptr) {
-                fprintf(output, "someoneSniff begin\n");
-                PrintAST(node->right->right, output);
-                fprintf(output, "lilEnd\n");
-            }
-            break;
-        case KEY_BEGIN:
-            fprintf(output, "begin\n");
-
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-
-            if (node->right != nullptr)
-                PrintAST(node->right, output);
-            break;
-        case KEY_CRY:
-            fprintf(output, "cry ");
-
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-            if (node->right != nullptr) { 
-                fprintf(output, ", ");
-                PrintAST(node->right, output);
-            }
-
-            fprintf(output, "dot\n");
-            break;
-        case KEY_DIFF:
-            assert(FAIL && "MAKE DIFF");
-            break;
-        case KEY_DOT:
-            fprintf(output, "dot\n");
-            break;
-        case KEY_ELSE:
-            assert(FAIL && "MALE ELSE");
-            break;
-        case KEY_ELSEIF:
-            assert(FAIL && "MAKE ELSEIF");
-            break;
-        case KEY_END:
-            assert(FAIL && "MAKE BIGEND");
-            break;
-        case KEY_FOR:
-            fprintf(output, "hire ");
-
-            PrintAST(node->left, output);
-            PrintAST(node->right, output);
-            break;
-        case KEY_FROM:
-            PrintAST(node->left, output);
-
-            fprintf(output, "from ");
-            
-            PrintAST(node->right, output);
-            break;
-        case KEY_GOBBLE:
-            fprintf(output, "gobble ");
-
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-            if (node->right != nullptr) {
-                fprintf(output, ", ");
-                PrintAST(node->right, output);
-            }
-
-            fprintf(output, "dot\n");
-            break;
-        case KEY_WITH:
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-
-            fprintf(output, "with ");
-            
-            if (node->right != nullptr)
-                PrintAST(node->right, output);
-            break;
-        case KEY_LILEND:
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-
-            fprintf(output, "lilEnd\n");
-            
-            if (node->right != nullptr)
-                PrintAST(node->right, output);
-            break;
-        case KEY_RETURN:
-            fprintf(output, "spit ");
-            
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-
-            if (node->right != nullptr)
-                PrintAST(node->right, output);
-            break;
-        case KEY_TO:
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-
-            fprintf(output, "to ");
-            
-            if (node->right != nullptr)
-                PrintAST(node->right, output);
-            break;
-        case KEY_IN:
-            if (node->left != nullptr)
-                PrintAST(node->left, output);
-
-            fprintf(output, "in ");
-            
-            if (node->right != nullptr)
-                PrintAST(node->right, output);
-            break;   
-        case KEY_WHILE:
-            fprintf(output, "homyak ");
-
-            PrintAST(node->left, output);
-
-            fprintf(output, "begin\n");
-            PrintAST(node->right, output);
-            break;
-        default:
-            fprintf(stderr, "UNKNOWN KEY %d\n", node->data.operation);
-            abort();
-            break;
+        if (isLog) fprintf(output, "db %s\n\n", context->stringsArray[curStr]);
     }
 }
 

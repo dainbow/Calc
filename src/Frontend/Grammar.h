@@ -1,17 +1,17 @@
 #pragma once
 
-#include "TXLib.h"
+//#include "TXLib.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
-#include "Differ.h"
-#include "Text.h"
-#include "Tree.h"
-#include "Utilities.h"
-#include "Graph.h"
+#include "../Tree/Differ.h"
+#include "../Utilities/Text.h"
+#include "../Tree/Tree.h"
+#include "../Utilities/Utilities.h"
+#include "../Tree/Graph.h"
 
 #define Require(smth)                                                   \
     if (smth) {                                                         \

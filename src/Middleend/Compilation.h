@@ -2,8 +2,8 @@
 
 #include <stdlib.h>
 
-#include "Text.h"
-#include "Utilities.h"
+#include "../Utilities/Text.h"
+#include "../Utilities/Utilities.h"
 
 struct CompileResult {
     size_t bytesCount;

@@ -1,9 +1,11 @@
 #pragma once
 
+#include "../Tree/Tree.h"
+#include "../Tree/Graph.h"
+
+#include "../Tree/TreeDiskUtilities.h"
 #include "Compilation.h"
-#include "Tree.h"
-#include "Graph.h"
-#include "Stack.h"
+#include "../Utilities/Stack.h"
 
 const char ASM_NAME[] = "asm";
 const char ASM_PATH[] = "out/";
@@ -59,6 +61,8 @@ struct CodegenContext {
     LocalVar variables[MAX_VARIABLES_AMOUNT];
 };
 
+void ProcessMiddleendArguments(int argc, char* argv[]);
+
 void GenerateCode(Tree* AST);
 void ASTBypass(Node* AST, FILE* output, CodegenContext* context);
 bool SkipConk(Node* AST, FILE* output, CodegenContext* context);
@@ -98,16 +102,6 @@ void ProcessGobble(Node* AST, FILE* output, CodegenContext* context);
 int32_t FindString(int8_t* name, CodegenContext* context);
 
 void PrintEndOfProgram(FILE* output, CodegenContext* context);
-
-void FrontendMinusOne(Tree* AST);
-void PrintAST(Node* node, FILE* output);
-
-int32_t GetOperationPriority(int8_t operation);
-
-void PrintOperationMinus1(Node* node, FILE* output);
-void PrintFunction(Node* node, FILE* output);
-void PrintKeyword(Node* node, FILE* output);
-void PrintString(Node* node, FILE* output);
 
 void NewArgument(Flags flags, int32_t argConstant, int32_t reg, const char labelName[], int32_t labelNum, const char string[], CodegenContext* context);
 void MakeSomethingWithLabel(int8_t commandNum, const char labelName[], uint32_t labelNum, CodegenContext* context);
