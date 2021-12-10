@@ -199,6 +199,7 @@ Node* Differentiate (Node* root) {
     case NodeDataTypes::TYPE_FUNC:
     case NodeDataTypes::TYPE_STR:
     case NodeDataTypes::TYPE_KEYWORD:
+        printf("TRYING TO DIFF NODE TYPE %d\n", root->data.operation);
         assert(FAIL && "SYNTAX ERROR, DIFFER CAN'T PROCESS THESE TYPES");
         break;
     case NodeDataTypes::TYPE_UNKNOWN:
@@ -268,10 +269,38 @@ int32_t FoldConst(Node* node) {
                     node->type = NodeDataTypes::TYPE_CONST;
                     break;
                 }
-                else 
+                else {
                     goto elseSection;
-            default:
-                assert(FAIL && "UNKNOWN OPERATION");
+                }
+            case L_OP:
+                node->data.number = node->left->data.number < node->right->data.number;
+                node->type = NodeDataTypes::TYPE_CONST;
+                break;
+            case LEQ_OP:
+                node->data.number = node->left->data.number <= node->right->data.number;
+                node->type = NodeDataTypes::TYPE_CONST;
+                break;
+            case G_OP:
+                node->data.number = node->left->data.number > node->right->data.number;
+                node->type = NodeDataTypes::TYPE_CONST;
+                break;
+            case GEQ_OP:
+                node->data.number = node->left->data.number >= node->right->data.number;
+                node->type = NodeDataTypes::TYPE_CONST;
+                break;
+            case DEQ_OP:
+                node->data.number = node->left->data.number == node->right->data.number;
+                node->type = NodeDataTypes::TYPE_CONST;
+                break;
+            case NEQ_OP:
+                node->data.number = node->left->data.number != node->right->data.number;
+                node->type = NodeDataTypes::TYPE_CONST;
+                break;
+            default: {
+                printf("Jumping\n");
+                goto elseSection;
+                break;
+                }
             }
         }
         else if (((node->data.operation) == LOG_OP) &&
@@ -305,6 +334,7 @@ int32_t FoldConst(Node* node) {
                 node->type = NodeDataTypes::TYPE_CONST;
                 break;
             default:
+                goto elseSection;
                 break;
             }
         }
@@ -320,9 +350,11 @@ int32_t FoldConst(Node* node) {
     }
     else {
         elseSection:
-        if (node->left  != nullptr)
+        if ((node->left  != nullptr) &&
+            (node->left->left != nullptr) && (node->left->right != nullptr))
             returnValue += FoldConst(node->left);
-        if (node->right != nullptr) 
+        if ((node->right != nullptr) &&
+            (node->right->left != nullptr) && (node->right->right != nullptr)) 
             returnValue += FoldConst(node->right);
     }
 
@@ -351,45 +383,48 @@ int32_t FoldConst(Node* node) {
         }                                                                       \
                                                                                 \
         return 1;                                                               \
-    }
-
-#define NEXT_CUT_FUNC_ITERATION(direction, function)                \
-    if (context.node-> direction ->type == NodeDataTypes::TYPE_OP) {               \
-        Context next = {context.node->direction, &context.node};    \
-                                                                    \
-        returnValue += function (next);                             \
-    }   
+    }  
 
 int32_t CutEqualNodes(Context context) {
     int32_t returnValue = 0;
 
-    if (context.node->data.operation == (int32_t)ADD_OP) {
-        CUT_EQUAL_NODES(left, right, 0)
-        CUT_EQUAL_NODES(right, left, 0)
-    }
-    else if (context.node->data.operation == (int32_t)MUL_OP) {
-        CUT_EQUAL_NODES(left, right, 1)
-        CUT_EQUAL_NODES(right, left, 1)
-    }
-    else if (context.node->data.operation == (int32_t)SUB_OP) {
-        CUT_EQUAL_NODES(right, left, 0)
-    }
-    else if (context.node->data.operation == (int32_t)POW_OP) {
-        CUT_EQUAL_NODES(right, left, 1)
-    }
-    else if (context.node->data.operation == (int32_t)DIV_OP) {
-        CUT_EQUAL_NODES(right, left, 1)
-    }
-    else if (context.node->data.operation == (int32_t)LOG_OP) {
-        CUT_EQUAL_NODES(left, right, 1)
+    if (context.node->type == NodeDataTypes::TYPE_OP) {
+        if (context.node->data.operation == (int32_t)ADD_OP) {
+            CUT_EQUAL_NODES(left, right, 0)
+            CUT_EQUAL_NODES(right, left, 0)
+        }
+        else if (context.node->data.operation == (int32_t)MUL_OP) {
+            CUT_EQUAL_NODES(left, right, 1)
+            CUT_EQUAL_NODES(right, left, 1)
+        }
+        else if (context.node->data.operation == (int32_t)SUB_OP) {
+            CUT_EQUAL_NODES(right, left, 0)
+        }
+        else if (context.node->data.operation == (int32_t)POW_OP) {
+            CUT_EQUAL_NODES(right, left, 1)
+        }
+        else if (context.node->data.operation == (int32_t)DIV_OP) {
+            CUT_EQUAL_NODES(right, left, 1)
+        }
+        else if (context.node->data.operation == (int32_t)LOG_OP) {
+            CUT_EQUAL_NODES(left, right, 1)
+        }
     }
 
-    if (context.node->type == NodeDataTypes::TYPE_OP) {
-        NEXT_CUT_FUNC_ITERATION(left,  CutEqualNodes)
-        NEXT_CUT_FUNC_ITERATION(right, CutEqualNodes)
+    if ((context.node->left != nullptr) &&
+        (context.node->left->left)      &&
+        (context.node->left->right)) {
+        Context next = {context.node->left, &context.node};    
+                                                                    
+        returnValue += CutEqualNodes(next); 
     }
-    else if (context.node->type == NodeDataTypes::TYPE_UNO) {
-        NEXT_CUT_FUNC_ITERATION(right, CutEqualNodes)
+
+    if ((context.node->right != nullptr) &&
+        (context.node->right->left)  &&
+        (context.node->right->right)) {
+        Context next = {context.node->right, &context.node};    
+                                                                    
+        returnValue += CutEqualNodes(next); 
     }
     
     return returnValue;
@@ -443,12 +478,20 @@ int32_t CutNullNodes(Context context) {
         }
     }
 
-    if (context.node->type == NodeDataTypes::TYPE_OP) {
-        NEXT_CUT_FUNC_ITERATION(left,  CutNullNodes)
-        NEXT_CUT_FUNC_ITERATION(right, CutNullNodes)
+    if ((context.node->left)        &&
+        (context.node->left->left)  &&
+        (context.node->left->right)) {
+        Context next = {context.node->left, &context.node};    
+                                                                    
+        returnValue += CutNullNodes(next); 
     }
-    else if (context.node->type == NodeDataTypes::TYPE_UNO) {
-        NEXT_CUT_FUNC_ITERATION(right, CutNullNodes)
+
+    if ((context.node->right)       &&
+        (context.node->right->left)  &&
+        (context.node->right->right)) {
+        Context next = {context.node->right, &context.node};    
+                                                                    
+        returnValue += CutNullNodes(next); 
     }
     
     return returnValue;
@@ -479,20 +522,15 @@ int32_t CutMinusOneNodes(Node* node) {
         CUT_MINUS_ONE_NODES(SUB_OP, 0, MUL_OP)
     }
 
-    if (node->type == NodeDataTypes::TYPE_OP) {
-        if (node->left->type  == NodeDataTypes::TYPE_OP) {
-            returnValue += CutMinusOneNodes(node->left);
-        }
-        if (node->right->type == NodeDataTypes::TYPE_OP) {
-            returnValue += CutMinusOneNodes(node->right);
-        }
-    }
-    else if (node->type == NodeDataTypes::TYPE_UNO) {
-        if ((node->right->type == NodeDataTypes::TYPE_OP) ||
-            (node->right->type == NodeDataTypes::TYPE_UNO)) {
-            returnValue += CutMinusOneNodes(node->right);
-        }
-    }
+    if ((node->left != nullptr) &&
+        (node->left->left)  &&
+        (node->left->right))
+        returnValue += CutMinusOneNodes(node->left);
+
+    if ((node->right != nullptr) &&
+        (node->right->left)  &&
+        (node->right->right))
+        returnValue += CutMinusOneNodes(node->right);
     
     return returnValue;
 }

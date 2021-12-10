@@ -9,17 +9,23 @@ Noname.exe: $(BinDir)/Frontend.o $(BinDir)/Grammar.o $(BinDir)/TreeDiskUtilities
 NoNoname.exe:  $(BinDir)/Frontend-1.o $(BinDir)/Grammar.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Tree.o $(BinDir)/Differ.o $(BinDir)/Graph.o $(BinDir)/Stack.o $(BinDir)/Text.o $(BinDir)/Utilities.o
 	g++ 	   $(BinDir)/Frontend-1.o $(BinDir)/Grammar.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Tree.o $(BinDir)/Differ.o $(BinDir)/Graph.o $(BinDir)/Stack.o $(BinDir)/Text.o $(BinDir)/Utilities.o -o Frontend/Noname-1.exe
 
-Middleend.exe: $(BinDir)/Middleend.o $(BinDir)/Compilation.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Stack.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Differ.o
-	g++		   $(BinDir)/Middleend.o $(BinDir)/Compilation.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Stack.o $(BinDir)/Text.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Utilities.o $(BinDir)/Differ.o -o Middleend/Middleend.exe
+Backend.exe:   $(BinDir)/Backend.o $(BinDir)/Compilation.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Stack.o $(BinDir)/Text.o $(BinDir)/Utilities.o $(BinDir)/Differ.o
+	g++		   $(BinDir)/Backend.o $(BinDir)/Compilation.o $(BinDir)/Tree.o $(BinDir)/Graph.o $(BinDir)/Stack.o $(BinDir)/Text.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Utilities.o $(BinDir)/Differ.o -o Backend/Backend.exe
 
-$(BinDir)/Frontend-1.o: $(SrcDir)/Frontend-1.cpp $(SrcDir)/Frontend/Frontend-1.h $(SrcDir)/Frontend/Grammar.h $(SrcDir)/Middleend/Middleend.h $(SrcDir)/Tree/TreeDiskUtilities.h
+Middleend.exe: 	$(BinDir)/Middleend.o $(BinDir)/Differ.o $(BinDir)/Tree.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Graph.o $(BinDir)/Text.o $(BinDir)/Utilities.o
+	g++			$(BinDir)/Middleend.o $(BinDir)/Differ.o $(BinDir)/Tree.o $(BinDir)/TreeDiskUtilities.o $(BinDir)/Graph.o $(BinDir)/Text.o $(BinDir)/Utilities.o -o Middleend/Middleend.exe
+
+$(BinDir)/Middleend.o: 	$(SrcDir)/Middleend.cpp $(SrcDir)/Middleend/Middleend.h $(SrcDir)/Utilities/Text.h $(SrcDir)/Backend/Backend.h $(SrcDir)/Tree/TreeDiskUtilities.h $(SrcDir)/Tree/Tree.h $(SrcDir)/Tree/Differ.h
+	g++ -c 				$(SrcDir)/Middleend.cpp -o $(BinDir)/Middleend.o $(CXXFLAGS)
+
+$(BinDir)/Frontend-1.o: $(SrcDir)/Frontend-1.cpp $(SrcDir)/Frontend/Frontend-1.h $(SrcDir)/Frontend/Grammar.h $(SrcDir)/Backend/Backend.h $(SrcDir)/Tree/TreeDiskUtilities.h
 	g++ -c				$(SrcDir)/Frontend-1.cpp -o $(BinDir)/Frontend-1.o $(CXXFLAGS)
 
-$(BinDir)/Compilation.o: $(SrcDir)/Middleend/compilation.cpp $(SrcDir)/Middleend/Compilation.h $(SrcDir)/Utilities/Text.h $(SrcDir)/Utilities/Utilities.h $(SrcDir)/Middleend/commands.h $(SrcDir)/Middleend/cmd_def.h
-	g++ -c 				 $(SrcDir)/Middleend/compilation.cpp -o $(BinDir)/Compilation.o $(CXXFLAGS)
+$(BinDir)/Compilation.o: $(SrcDir)/Backend/compilation.cpp $(SrcDir)/Backend/Compilation.h $(SrcDir)/Utilities/Text.h $(SrcDir)/Utilities/Utilities.h $(SrcDir)/Backend/commands.h $(SrcDir)/Backend/cmd_def.h
+	g++ -c 				 $(SrcDir)/Backend/compilation.cpp -o $(BinDir)/Compilation.o $(CXXFLAGS)
 
-$(BinDir)/Middleend.o: $(SrcDir)/Middleend.cpp  $(SrcDir)/Middleend/Middleend.h $(SrcDir)/Middleend/Compilation.h $(SrcDir)/Tree/Tree.h $(SrcDir)/Tree/Graph.h $(SrcDir)/Tree/TreeDiskUtilities.cpp
-	g++ -c 		       $(SrcDir)/Middleend.cpp -o $(BinDir)/Middleend.o $(CXXFLAGS)
+$(BinDir)/Backend.o: $(SrcDir)/Backend.cpp  $(SrcDir)/Backend/Backend.h $(SrcDir)/Backend/Compilation.h $(SrcDir)/Tree/Tree.h $(SrcDir)/Tree/Graph.h $(SrcDir)/Tree/TreeDiskUtilities.cpp
+	g++ -c 		       $(SrcDir)/Backend.cpp -o $(BinDir)/Backend.o $(CXXFLAGS)
 
 $(BinDir)/Grammar.o: $(SrcDir)/Frontend/Grammar.cpp $(SrcDir)/Frontend/Grammar.h $(SrcDir)/Utilities/Text.h $(SrcDir)/Tree/Tree.h $(SrcDir)/Tree/Graph.h $(SrcDir)/Utilities/Utilities.h
 	g++ -c 		  	 $(SrcDir)/Frontend/Grammar.cpp -o $(BinDir)/Grammar.o $(CXXFLAGS)
@@ -36,7 +42,7 @@ $(BinDir)/Text.o: $(SrcDir)/Utilities/Text.cpp $(SrcDir)/Utilities/Text.h
 $(BinDir)/Utilities.o: $(SrcDir)/Utilities/Utilities.cpp $(SrcDir)/Utilities/Utilities.h
 	g++ -c 			   $(SrcDir)/Utilities/Utilities.cpp -o $(BinDir)/Utilities.o $(CXXFLAGS)
 
-$(BinDir)/TreeDiskUtilities.o: 	$(SrcDir)/Tree/TreeDiskUtilities.cpp $(SrcDir)/Tree/TreeDiskUtilities.h $(SrcDir)/Utilities/Text.h $(SrcDir)/Middleend/Compilation.h
+$(BinDir)/TreeDiskUtilities.o: 	$(SrcDir)/Tree/TreeDiskUtilities.cpp $(SrcDir)/Tree/TreeDiskUtilities.h $(SrcDir)/Utilities/Text.h $(SrcDir)/Backend/Compilation.h
 	g++	-c						$(SrcDir)/Tree/TreeDiskUtilities.cpp -o $(BinDir)/TreeDiskUtilities.o $(CXXFLAGS)
 
 $(BinDir)/Tree.o: $(SrcDir)/Tree/Tree.cpp $(SrcDir)/Tree/Tree.h $(SrcDir)/Utilities/Text.h

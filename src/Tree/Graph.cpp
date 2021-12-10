@@ -13,7 +13,6 @@ char* MakeTreeGraph(Tree* tree, const char name[]) {
 
     fprintf(output, "digraph G{ \n");
     fprintf(output, "\tnewrank=true;\n");
-
     PrintTreeNodes(tree, tree->root, output);
     fprintf(output, "}\n");
     fclose(output);

@@ -1,12 +1,15 @@
 #include "TreeDiskUtilities.h"
 
-#include "../Middleend/Middleend.h"
+#include "../Backend/Backend.h"
 
-void DropTreeOnDisk(Tree* AST) {
+void DropTreeOnDisk(Tree* AST, char* outputF) {
     assert(AST != nullptr);
     char endName[MAX_FILE_NAME_LENGTH] = "";
 
-    GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    if (outputF)
+        strcat(endName, outputF);
+    else
+        GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
 
     strcat(endName, TREE_OUTPUT_FORMAT);
     FILE* output = fopen(endName, "w");

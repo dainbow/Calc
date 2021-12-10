@@ -86,8 +86,6 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
 
     char nodeData[MAX_NODE_DATA_LENGTH] = "";
 
-    printf("Printing %p node with %p left and %p right, expression is %p\n", root, root->left, root->right, root->data.expression);
-
     switch (root->type) {
     case NodeDataTypes::TYPE_CONST:
         sprintf(nodeData, "%lf", root->data.number);
@@ -163,6 +161,9 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
                 break;
             case KEY_GOBBLE:
                 strcat(nodeData, "read");
+                break;
+            case KEY_DIFF:
+                strcat(nodeData, "diff");
                 break;
             default:
                 fprintf(stderr, "INVALID KEYWORD %d\n", root->data.operation);

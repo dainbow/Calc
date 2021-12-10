@@ -4,12 +4,13 @@ int main(int argc, char* argv[]) {
     ProcessFrontendminus1Arguments(argc, argv);
 
     char treeName[MAX_FILE_NAME_LENGTH] = "";
-    if (outputReversedName == nullptr) 
+    if (inputReversedName == nullptr) 
         GenerateOutputName(ASM_NAME, treeName, ASM_PATH, ASM_OUTPUT_FORMAT);
     
     else 
-        strcat(treeName, outputReversedName);
+        strcat(treeName, inputReversedName);
     strcat(treeName, TREE_OUTPUT_FORMAT);
+    printf("Reading %s\n", treeName);
 
     Text treeText = {};
 
@@ -27,12 +28,16 @@ int main(int argc, char* argv[]) {
 
 void ProcessFrontendminus1Arguments(int argc, char* argv[]) {
     for (int32_t curArg = 1; curArg < argc; curArg++) {
-        if (!strcmp((const char*)argv[curArg], "-minoneG")) {
+        if (!strcmp(argv[curArg], "-minoneG")) {
             isShowReversedTree = 1;
         }
 
-        if (!strcmp((const char*)argv[curArg], "-o")) {
+        if (!strcmp(argv[curArg], "-o")) {
             outputReversedName = argv[curArg + 1];
+        }
+
+        if (!strcmp(argv[curArg], "-i")) {
+            inputReversedName  = argv[curArg + 1];
         }
     }
 }
@@ -41,10 +46,17 @@ void FrontendMinusOne(Tree* AST) {
     assert(AST != nullptr);
 
     char endName[MAX_FILE_NAME_LENGTH] = "";
-    GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    
+    if (outputReversedName != nullptr) {
+        strcat(endName, outputReversedName);
+    }
+    else {
+        GenerateOutputName(ASM_NAME, endName, ASM_PATH, ASM_OUTPUT_FORMAT);
+    }
 
     strcat(endName, ASM_REVERSED_FORMAT);
-    FILE* outputReversed = fopen(endName, "w");
+    FILE* outputReversed = (outputReversedName) ? 
+                            fopen(endName, "w") : (FILE*)calloc(1, sizeof(FILE*));
 
     PrintAST(AST->root, outputReversed);
     fprintf(outputReversed, "bigEnd\n");
@@ -297,7 +309,15 @@ void PrintKeyword(Node* node, FILE* output) {
             fprintf(output, "dot\n");
             break;
         case KEY_DIFF:
-            assert(FAIL && "MAKE DIFF");
+            fprintf(output, "diff ");
+            
+            if (node->left) {
+                PrintAST(node->left, output);
+            }
+
+            if (node->right) {
+                PrintAST(node->right, output);
+            }
             break;
         case KEY_DOT:
             fprintf(output, "dot\n");

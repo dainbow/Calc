@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     TreeCtor(AST);
     MakeAST(&AST, &tokens);
 
-    DropTreeOnDisk(&AST);
+    DropTreeOnDisk(&AST, outputFrontFile);
     if (isShowFrontTree) MakeTreeGraph(&AST, G_STANDART_NAME);
     
     printf("OK\n");
@@ -41,7 +41,11 @@ void ProcessMiddleendArguments(int argc, char* argv[]) {
         }
 
         if (!strcmp(argv[curArg], "-o")) {
-            inputFrontFile = argv[curArg + 1];
+            outputFrontFile = argv[curArg + 1];
+        }
+
+        if (!strcmp(argv[curArg], "-i")) {
+            inputFrontFile  = argv[curArg + 1];
         }
     }
 }

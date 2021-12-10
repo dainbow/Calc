@@ -129,11 +129,12 @@ Node* GetD(Node** pointer) {
     assert(*pointer != nullptr);
 
     if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DIFF)) {
+        Node* diff = *pointer;
         (*pointer)++;
-        Node* diffResult = Differentiate(GetE(pointer));
-        diffResult       = OptimisationAfterDiff(diffResult);
 
-        return diffResult;
+        diff->left = GetE(pointer);
+
+        return diff;
     }
     else {
         return GetE(pointer);

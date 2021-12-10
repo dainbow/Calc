@@ -6,6 +6,8 @@
 #include "../Tree/TreeDiskUtilities.h"
 
 bool  isShowReversedTree = 0;
+
+char* inputReversedName  = 0;
 char* outputReversedName = 0;
 
 const char TREE_OUTPUT_FORMAT[]     = ".notree";
