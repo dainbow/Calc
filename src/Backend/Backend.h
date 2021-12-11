@@ -1,7 +1,5 @@
 #pragma once
 
-#include "TXLib.h"
-
 #include "../Tree/Tree.h"
 #include "../Tree/Graph.h"
 
@@ -104,6 +102,7 @@ void ProcessIf(Node* AST, FILE* output, CodegenContext* context);
 
 void ProcessCry(Node* AST, FILE* output, CodegenContext* context);
 void ProcessGobble(Node* AST, FILE* output, CodegenContext* context);
+void ProcessShow(Node* AST, FILE* output, CodegenContext* context);
 
 int32_t FindString(int8_t* name, CodegenContext* context);
 
@@ -116,4 +115,4 @@ void MakeLabel(const char labelName[], int32_t labelNumber, CodegenContext* cont
 
 void DoWithConstant(int8_t cmdNum, double constant, CodegenContext* context);
 void DoToRegister(int8_t cmdNum, int8_t regNum, CodegenContext* context);
-void DoToMem(int8_t cmdNum, double offset, CodegenContext* context);
+void DoToMem(int8_t cmdNum, int8_t regNum, double offset, CodegenContext* context);

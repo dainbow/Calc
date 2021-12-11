@@ -29,4 +29,5 @@ void PrintOperationMinus1(Node* node, FILE* output);
 void PrintFunction(Node* node, FILE* output);
 void PrintKeyword(Node* node, FILE* output);
 void PrintString(Node* node, FILE* output);
+void PrintArray(Node* node, FILE* output);
 

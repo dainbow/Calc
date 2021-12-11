@@ -9,7 +9,7 @@
 const int32_t COMMAND_SIZE          = 1;
 const int32_t CONST_ARGUMENT_SIZE   = 4;
 const int32_t MAX_FILE_SIZE         = 100;
-const int32_t ACCURACY              = 1000;
+const int32_t ACCURACY              = 10;
 const int32_t SIGNATURE_SIZE        = 5;
 const int32_t FAIL                  = 0;
 const int32_t BYTE_OF_ARGS          = 1;
@@ -20,7 +20,7 @@ const int32_t MAX_NUMBER_SIZE       = 400;
 const int32_t MAX_REG_NAME          = 3;
 const int32_t MAX_LABEL_NAME        = 100;
 const int32_t MAX_LABEL_AMOUNT      = 70;
-const int32_t BEGINNING_OF_GMEM     = 1000;
+const int32_t BEGINNING_OF_GMEM     = 500000;
 const int32_t MAX_STRING_NAME       = 100;
 const int32_t STRING_DIVIDER_SIZE   = 1;
 const int32_t QUOTE_SIZE            = 1;

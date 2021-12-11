@@ -205,7 +205,9 @@ void PrintOperationMinus1(Node* node, FILE* output) {
                 ((node->left->data.operation == KEY_FOR)    ||
                  (node->left->data.operation == KEY_CRY)    ||
                  (node->left->data.operation == KEY_GOBBLE) ||
-                 (node->left->data.operation == KEY_IF))))
+                 (node->left->data.operation == KEY_IF)     ||
+                 (node->left->data.operation == KEY_SHOW)   ||
+                 (node->left->data.operation == KEY_PAINT))))
                 fprintf(output, "$\n");
             break;
         default:
@@ -360,6 +362,18 @@ void PrintKeyword(Node* node, FILE* output) {
             break;
         case KEY_SHOW:
             fprintf(output, "show ");
+
+            if (node->left != nullptr)
+                PrintAST(node->left, output);
+            if (node->right != nullptr) {
+                fprintf(output, ", ");
+                PrintAST(node->right, output);
+            }
+
+            fprintf(output, "dot\n");
+            break;
+        case KEY_PAINT:
+            fprintf(output, "paint ");
 
             if (node->left != nullptr)
                 PrintAST(node->left, output);

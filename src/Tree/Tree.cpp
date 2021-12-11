@@ -166,6 +166,9 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
             case KEY_DIFF:
                 strcat(nodeData, "diff");
                 break;
+            case KEY_SHOW:
+                strcat(nodeData, "show");
+                break;
             default:
                 fprintf(stderr, "INVALID KEYWORD %d\n", root->data.operation);
                 abort();

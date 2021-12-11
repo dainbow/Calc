@@ -127,6 +127,7 @@ Node* GetF(Node** pointer) {
 Node* GetD(Node** pointer) {
     assert( pointer != nullptr);
     assert(*pointer != nullptr);
+    printf("Looking at node with type %d\n", (**pointer).type);
 
     if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DIFF)) {
         Node* diff = *pointer;
@@ -159,7 +160,7 @@ Node* GetK(Node** pointer) {
             IO_CONSTRUCTION(GetD);
         }
         case KEY_SHOW: {
-            IO_CONSTRUCTION(GetV);
+            IO_CONSTRUCTION(GetD);
         }
         case KEY_RETURN:
             (*pointer)++;
@@ -276,15 +277,15 @@ Node* GetS(Node** pointer) {
         retValue->left = GetV(pointer);
         (*pointer)++;
 
-        if (retValue->type == NodeDataTypes::TYPE_VAR) {
-            (*pointer)++;
+        if (retValue->left->type == NodeDataTypes::TYPE_VAR) {
             retValue->right = GetD(pointer);
         }
         else {
+            printf("Getting in args for var %s\n", retValue->left->data.expression);
             Node* exprNode = GetD(pointer);
             Node* bottom   = retValue;
 
-            if (((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT)) {
+            if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DOT)) {
                 while(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT)) {
                     bottom->right = *pointer;
                     (*pointer)++;
@@ -348,9 +349,10 @@ Node* SkipThings(Node** pointer) {
 
     if (((*pointer + ptrOffset)->type == NodeDataTypes::TYPE_UNO) &&
         ((*pointer + ptrOffset)->data.operation == LEFT_SQR_OP)) {
-        ptrOffset++;
-        while(((*pointer + ptrOffset++)->type != NodeDataTypes::TYPE_UNO) &&
-              ((*pointer + ptrOffset)->data.operation != RIGHT_SQR_OP)) {}
+        while(((*pointer + ptrOffset)->type != NodeDataTypes::TYPE_UNO) ||
+              ((*pointer + ptrOffset)->data.operation != RIGHT_SQR_OP)) {
+            ptrOffset++;
+        }
         ptrOffset++;
     }
 
@@ -549,6 +551,8 @@ Node* GetN(Node** pointer) {
     (*pointer)++;
 
     if ((*retValue).type != NodeDataTypes::TYPE_CONST) {
+
+
         assert(FAIL && "INVALID RETURN FOR GET N FUNCTION");
     } 
 

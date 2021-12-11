@@ -1,0 +1,34 @@
+main begin
+	h in 0 $
+	w in 0 $
+	x in 0 $
+	y in 0 $
+	r in 0 $
+
+	cry "Please enter H and W of window" dot
+	gobble h, w dot
+	
+	cry "Please enter coords of circle center" dot
+	gobble x, y dot
+	
+	cry "Please enter circle radius" dot
+	gobble r dot
+	
+	hire ycoord from 0 to h begin
+		hire xcoord from 0 to w begin 
+			vasyaSniff (((x - xcoord)^2 + (y - ycoord)^2) <= 1.2*r^2) * (((x - xcoord)^2 + (y - ycoord)^2) >= r^2) begin
+				GMEM[3 * (ycoord * h + xcoord)] in 120 $
+				GMEM[3 * (ycoord * h + xcoord) + 1] in 150 $
+				GMEM[3 * (ycoord * h + xcoord) + 2] in 0 $
+			lilEnd
+			someoneSniff begin
+				GMEM[3 * (ycoord * h + xcoord)] in 0 $
+				GMEM[3 * (ycoord * h + xcoord) + 1] in 0 $
+				GMEM[3 * (ycoord * h + xcoord) + 2] in 0 $
+			lilEnd
+		lilEnd
+	lilEnd
+	
+	show h, w dot
+lilEnd
+bigEnd
