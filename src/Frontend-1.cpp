@@ -76,6 +76,9 @@ void PrintAST(Node* node, FILE* output) {
         case NodeDataTypes::TYPE_KEYWORD:
             PrintKeyword(node, output);
             break;
+        case NodeDataTypes::TYPE_ARR:
+            PrintArray(node, output);
+            break;
         case NodeDataTypes::TYPE_UNO: 
         case NodeDataTypes::TYPE_OP:
             PrintOperationMinus1(node, output);
@@ -96,6 +99,17 @@ void PrintAST(Node* node, FILE* output) {
             assert(FAIL && "UNKNOWN TYPE");
             break;
     }
+}
+
+void PrintArray(Node* node, FILE* output) {
+    assert(node   != nullptr);
+    assert(output != nullptr);
+
+    fprintf(output, "%s[", node->data.expression);
+
+    PrintAST(node->left, output);
+
+    fprintf(output, "]");
 }
 
 void PrintString(Node* node, FILE* output) {
@@ -343,6 +357,18 @@ void PrintKeyword(Node* node, FILE* output) {
             fprintf(output, "from ");
             
             PrintAST(node->right, output);
+            break;
+        case KEY_SHOW:
+            fprintf(output, "show ");
+
+            if (node->left != nullptr)
+                PrintAST(node->left, output);
+            if (node->right != nullptr) {
+                fprintf(output, ", ");
+                PrintAST(node->right, output);
+            }
+
+            fprintf(output, "dot\n");
             break;
         case KEY_GOBBLE:
             fprintf(output, "gobble ");

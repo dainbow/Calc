@@ -158,6 +158,9 @@ Node* GetK(Node** pointer) {
         case KEY_CRY: {
             IO_CONSTRUCTION(GetD);
         }
+        case KEY_SHOW: {
+            IO_CONSTRUCTION(GetV);
+        }
         case KEY_RETURN:
             (*pointer)++;
             retValue->left = GetS(pointer);
@@ -263,14 +266,43 @@ Node* GetS(Node** pointer) {
     assert(*pointer != nullptr);
 
     Node* retValue       = 0;
+    Node* ptrToSkipped   = SkipThings(pointer);
+    printf("PtrToskipped's type is %d and op is %d\n", ptrToSkipped->type, ptrToSkipped->data.operation);
 
-    if (((**pointer).type == NodeDataTypes::TYPE_VAR) &&
-        ((*(*pointer + 1)).type == NodeDataTypes::TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_IN)) {
-        retValue       = *pointer + 1;
+    if ((ptrToSkipped->type == NodeDataTypes::TYPE_KEYWORD) &&
+        (ptrToSkipped->data.operation == KEY_IN)) {
+        retValue       = ptrToSkipped;
+
         retValue->left = GetV(pointer);
-        
         (*pointer)++;
-        retValue->right = GetD(pointer);
+
+        if (retValue->type == NodeDataTypes::TYPE_VAR) {
+            (*pointer)++;
+            retValue->right = GetD(pointer);
+        }
+        else {
+            Node* exprNode = GetD(pointer);
+            Node* bottom   = retValue;
+
+            if (((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT)) {
+                while(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT)) {
+                    bottom->right = *pointer;
+                    (*pointer)++;
+
+                    bottom = bottom->right;
+
+                    bottom->left = exprNode;
+                                        
+                    exprNode = GetD(pointer);
+                }
+                bottom->right = exprNode;
+
+                Require(((**pointer).type != NodeDataTypes::TYPE_KEYWORD) || ((**pointer).data.operation != KEY_DOT));
+            }
+            else {
+                bottom->right = exprNode;
+            }
+        }
     }
     else if (((*(*pointer + 1)).type == NodeDataTypes::TYPE_KEYWORD) && ((*(*pointer + 1)).data.operation == KEY_TO)) {
         Node* expression = GetD(pointer);
@@ -297,10 +329,32 @@ Node* GetS(Node** pointer) {
         (*pointer)++;
     }
     else {
+        fprintf(stderr, "Looking at node with type %d and op is %d\n", (**pointer).type, (**pointer).data.operation);
         assert(FAIL && "SYNTAX ERROR, EOL NOT FOUND");
     }
 
     return retValue;
+}
+
+Node* SkipThings(Node** pointer) {
+    assert( pointer != nullptr);
+    assert(*pointer != nullptr);
+
+    int32_t ptrOffset = 0;
+    
+    if ((**pointer).type == NodeDataTypes::TYPE_VAR) {
+        ptrOffset++;
+    }
+
+    if (((*pointer + ptrOffset)->type == NodeDataTypes::TYPE_UNO) &&
+        ((*pointer + ptrOffset)->data.operation == LEFT_SQR_OP)) {
+        ptrOffset++;
+        while(((*pointer + ptrOffset++)->type != NodeDataTypes::TYPE_UNO) &&
+              ((*pointer + ptrOffset)->data.operation != RIGHT_SQR_OP)) {}
+        ptrOffset++;
+    }
+
+    return *pointer + ptrOffset;
 }
 
 Node* GetE(Node** pointer) {
@@ -473,6 +527,16 @@ Node* GetV(Node** pointer) {
         assert(FAIL && "INVALID RETURN FOR GET V FUNCTION");
     } 
 
+    if(((**pointer).type == NodeDataTypes::TYPE_UNO) &&
+        ((**pointer).data.operation == LEFT_SQR_OP)) {
+        (*pointer)++;
+
+        retValue->left = GetD(pointer);
+
+        Require(((**pointer).type != NodeDataTypes::TYPE_UNO) || ((**pointer).data.operation != RIGHT_SQR_OP));
+        retValue->type = NodeDataTypes::TYPE_ARR;
+    }
+
     return retValue;
 }
 
@@ -481,6 +545,7 @@ Node* GetN(Node** pointer) {
     assert(*pointer != nullptr);
 
     Node* retValue = *pointer;
+    printf("Looking at type %d with op %d\n", (*pointer)->type, (*pointer)->data.operation);
     (*pointer)++;
 
     if ((*retValue).type != NodeDataTypes::TYPE_CONST) {

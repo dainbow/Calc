@@ -44,6 +44,7 @@ void BypassTreeToDiskDrop(Node* node, BinaryArr* output) {
             output->bytesCount += sizeof(node->data.operation);
 
             break;
+        case NodeDataTypes::TYPE_ARR:
         case NodeDataTypes::TYPE_FUNC:
         case NodeDataTypes::TYPE_STR:
         case NodeDataTypes::TYPE_VAR:
@@ -94,6 +95,7 @@ Node* ReadTreeFromDisk(Text* treeText, uint64_t* curByte) {
             curData.operation = *(int8_t*)(treeText->buffer + *curByte);
             (*curByte) += sizeof(curData.operation);
             break;
+        case NodeDataTypes::TYPE_ARR:
         case NodeDataTypes::TYPE_FUNC:
         case NodeDataTypes::TYPE_STR:
         case NodeDataTypes::TYPE_VAR:    
@@ -114,7 +116,8 @@ Node* ReadTreeFromDisk(Text* treeText, uint64_t* curByte) {
     *curByte += sizeof(Node*);
 
     retValue = MakeNewNode(curData.operation, curData.number, curData.expression, curType, 0, 0);
-    
+    printf("Made node with type %d\n", retValue->type);
+
     if ((leftPtr != 0) &&
         (rightPtr != 0)) {
         retValue->left  = ReadTreeFromDisk(treeText, curByte);

@@ -50,6 +50,7 @@ Node* GetK(Node** pointer);
 Node* GetDeg(Node** pointer);
 
 void SkipSpaces(int8_t** pointer);
+Node* SkipThings(Node** pointer);
 
 void AnalyseText(Text* text, Tokens* tokens, Text* keywords);
 int8_t IsKeyword(int8_t* buffer, Text* keywords);

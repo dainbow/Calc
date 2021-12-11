@@ -30,8 +30,11 @@
 #define HLT EmitCommand(0, context->result)   
 #define RET EmitCommand(44, context->result)    
 
-#define POP_TO_REG  DoToRegister(5, context)
-#define PUSH_TO_REG DoToRegister(1, context)
+#define POP_TO_BX  DoToRegister(5, 1, context)
+#define PUSH_TO_BX DoToRegister(1, 1, context)
+
+#define PUSH_TO_AX DoToRegister(1, 0, context)
+#define POP_TO_AX  DoToRegister(5, 0, context)
 
 #define PUSH_CONST(constant) DoWithConstant(1, constant, context)
 #define OUT_CONST(constant)  DoWithConstant(57, constant, context)
@@ -395,23 +398,153 @@ void ProcessReturn(Node* AST, FILE* output, CodegenContext* context) {
 void ProcessTo(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
     assert(context != nullptr);
+    uint32_t varOffset = 0;
 
-    uint32_t varOffset = MakeLocalVar(AST->right->data.expression, context);
-    ASTBypass(AST->left, output, context);
+    if (AST->type == NodeDataTypes::TYPE_VAR) {
+        varOffset = MakeLocalVar(AST->right->data.expression, context);
+        ASTBypass(AST->left, output, context);
 
-    POP_TO_MEM(MEMORY_CELL_SIZE * varOffset);
-    if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+        POP_TO_MEM(MEMORY_CELL_SIZE * varOffset);
+        if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+    }
+    else if (AST->type == NodeDataTypes::TYPE_ARR) {
+        int32_t arrOffset = 0;
+
+        if ((arrOffset = GetVarOffset(AST->right->data.expression, context)) == -1) {
+            int32_t argumentsCount = 0;
+            int32_t arrLength      = (int32_t)AST->right->left->data.number;
+            varOffset = MakeLocalArr(AST->right->data.expression, arrLength, context);
+
+            if ((AST->right->type == NodeDataTypes::TYPE_OP) && 
+                (AST->right->data.operation == COMMA_OP)) {
+                Node* bottom = AST->left;
+                
+                while((bottom->right->type == NodeDataTypes::TYPE_OP) && 
+                      (bottom->right->data.operation == COMMA_OP)) {
+                    argumentsCount++;
+                    bottom = bottom->right;
+
+                    PushNode(bottom->left, output, context);
+                }
+                argumentsCount++;
+                PushNode(bottom->right, output, context);
+            }
+            else {
+                argumentsCount++;
+                PushNode(AST->left, output, context);
+            }
+
+            assert(argumentsCount < arrLength);
+
+            for (int32_t curOffset = 0; curOffset < argumentsCount; curOffset++) {
+                POP_TO_MEM(MEMORY_CELL_SIZE * (varOffset + curOffset));
+                if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * (varOffset + curOffset));
+            }
+        }
+        else {
+            PushNode(AST->right->left, output, context);
+            POP_TO_AX;
+            if (isLog) fprintf(output, "pop ax\n");
+
+            PUSH_TO_AX;
+            if (isLog) fprintf(output, "push ax\n");
+            PUSH_TO_BX;
+            if (isLog) fprintf(output, "push bx\n");
+            ADD;
+            if (isLog) fprintf(output, "add\n");
+            POP_TO_BX;
+            if (isLog) fprintf(output, "pop bx\n");
+
+            PushNode(AST->left, output, context);
+            POP_TO_MEM(MEMORY_CELL_SIZE * arrOffset);
+            if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * arrOffset);
+
+            PUSH_TO_BX;
+            if (isLog) fprintf(output, "push bx\n");
+            PUSH_TO_AX;
+            if (isLog) fprintf(output, "push ax\n");
+            SUB;
+            if (isLog) fprintf(output, "sub\n");
+            POP_TO_BX;
+            if (isLog) fprintf(output, "pop bx\n");
+        }
+    }
 }
 
 void ProcessIn(Node* AST, FILE* output, CodegenContext* context) {
     assert(AST     != nullptr);
     assert(context != nullptr);
+    uint32_t varOffset = 0;
 
-    uint32_t varOffset = MakeLocalVar(AST->left->data.expression, context);
-    ASTBypass(AST->right, output, context);
+    printf("IN with node type %d\n", AST->type);
+    if (AST->left->type == NodeDataTypes::TYPE_VAR) {
+        varOffset = MakeLocalVar(AST->left->data.expression, context);
+        ASTBypass(AST->right, output, context);
 
-    POP_TO_MEM(MEMORY_CELL_SIZE * varOffset);
-    if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+        POP_TO_MEM(MEMORY_CELL_SIZE * varOffset);
+        if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+    }
+    else if (AST->left->type == NodeDataTypes::TYPE_ARR) {
+        int32_t arrOffset = 0;
+        if ((arrOffset = GetVarOffset(AST->left->data.expression, context)) == -1) {
+            int32_t argumentsCount = 0;
+            int32_t arrLength      = (int32_t)AST->left->left->data.number;
+            varOffset = MakeLocalArr(AST->left->data.expression, arrLength, context);
+
+            if ((AST->right->type == NodeDataTypes::TYPE_OP) && 
+                (AST->right->data.operation == COMMA_OP)) {
+                Node* bottom = AST->right;
+                
+                while((bottom->right->type == NodeDataTypes::TYPE_OP) && 
+                      (bottom->right->data.operation == COMMA_OP)) {
+                    argumentsCount++;
+                    bottom = bottom->right;
+
+                    PushNode(bottom->left, output, context);
+                }
+                argumentsCount++;
+                PushNode(bottom->right, output, context);
+            }
+            else {
+                argumentsCount++;
+                PushNode(AST->right, output, context);
+            }
+
+            assert(argumentsCount < arrLength);
+
+            for (int32_t curOffset = 0; curOffset < argumentsCount; curOffset++) {
+                POP_TO_MEM(MEMORY_CELL_SIZE * (varOffset + curOffset));
+                if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * (varOffset + curOffset));
+            }
+        }
+        else {
+            PushNode(AST->left->left, output, context);
+            POP_TO_AX;
+            if (isLog) fprintf(output, "pop ax\n");
+
+            PUSH_TO_AX;
+            if (isLog) fprintf(output, "push ax\n");
+            PUSH_TO_BX;
+            if (isLog) fprintf(output, "push bx\n");
+            ADD;
+            if (isLog) fprintf(output, "add\n");
+            POP_TO_BX;
+            if (isLog) fprintf(output, "pop bx\n");
+
+            PushNode(AST->right, output, context);
+            POP_TO_MEM(MEMORY_CELL_SIZE * arrOffset);
+            if (isLog) fprintf(output, "pop {bx + %u}\n", MEMORY_CELL_SIZE * arrOffset);
+
+            PUSH_TO_BX;
+            if (isLog) fprintf(output, "push bx\n");
+            PUSH_TO_AX;
+            if (isLog) fprintf(output, "push ax\n");
+            SUB;
+            if (isLog) fprintf(output, "sub\n");
+            POP_TO_BX;
+            if (isLog) fprintf(output, "pop bx\n");
+        }
+    }
 }
 
 void ProcessIf(Node* AST, FILE* output, CodegenContext* context) {
@@ -575,6 +708,37 @@ void PushNode(Node* AST, FILE* output, CodegenContext* context) {
 
         PUSH_TO_MEM(MEMORY_CELL_SIZE * varOffset);
         if (isLog) fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+    }
+
+    if (AST->type == NodeDataTypes::TYPE_ARR) {
+        int32_t varOffset = GetVarOffset(AST->data.expression, context);
+        if (varOffset == -1)
+            assert(0 && "UNKNOWN VAR");
+
+        PushNode(AST->left, output, context);
+        POP_TO_AX;
+        if (isLog) fprintf(output, "pop ax\n");
+
+        PUSH_TO_AX;
+        if (isLog) fprintf(output, "push ax\n");
+        PUSH_TO_BX;
+        if (isLog) fprintf(output, "push bx\n");
+        ADD;
+        if (isLog) fprintf(output, "add\n");
+        POP_TO_BX;
+        if (isLog) fprintf(output, "pop bx\n");
+
+        PUSH_TO_MEM(MEMORY_CELL_SIZE * varOffset);
+        if (isLog) fprintf(output, "push {bx + %u}\n", MEMORY_CELL_SIZE * varOffset);
+
+        PUSH_TO_BX;
+        if (isLog) fprintf(output, "push bx\n");
+        PUSH_TO_AX;
+        if (isLog) fprintf(output, "push ax\n");
+        SUB;
+        if (isLog) fprintf(output, "sub\n");
+        POP_TO_BX;
+        if (isLog) fprintf(output, "pop bx\n");
     }
 
     if (AST->type == NodeDataTypes::TYPE_OP) {
@@ -848,6 +1012,25 @@ void MakeFunc(int8_t* name, CodegenContext* context, int32_t argAmount) {
     context->amounts.functionsAmount++;
 }
 
+uint32_t MakeLocalArr(int8_t* name, int32_t length, CodegenContext* context) {
+    assert(name    != nullptr);
+    assert(context != nullptr);
+    int32_t repState = GetVarOffset(name, context);
+
+    if (repState == -1) {
+        context->variables[context->offset].name = name; 
+        context->variables[context->offset].offset[context->recursionDepth] = context->offset;
+
+        context->offset += length;
+        printf("Created arr %s with length %d\n", name, length);
+
+        return (context->offset - length); 
+    }
+    else {
+        return (uint32_t)repState;
+    }
+}
+
 uint32_t MakeLocalVar(int8_t* name, CodegenContext* context) {
     assert(name    != nullptr);
     assert(context != nullptr);
@@ -908,13 +1091,13 @@ void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     PUSH_CONST(MEMORY_CELL_SIZE * context->offset);
     if (isLog) fprintf(output, "push %u\n", MEMORY_CELL_SIZE * context->offset);
 
-    PUSH_TO_REG;
+    PUSH_TO_BX;
     if (isLog) fprintf(output, "push bx\n");
 
     ADD;
     if (isLog) fprintf(output, "add\n");
 
-    POP_TO_REG;
+    POP_TO_BX;
     if (isLog) fprintf(output, "pop bx\n");
 }
 
@@ -924,7 +1107,7 @@ void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
 
     context->offset = (!context->offsetStack->size) ? 0 : (uint32_t)(int64_t)StackPop(context->offsetStack);
 
-    PUSH_TO_REG;
+    PUSH_TO_BX;
     if (isLog) fprintf(output, "push bx\n");
 
     PUSH_CONST(MEMORY_CELL_SIZE * context->offset);
@@ -933,7 +1116,7 @@ void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context) {
     SUB;
     if (isLog) fprintf(output, "sub\n");
 
-    POP_TO_REG;
+    POP_TO_BX;
     if (isLog) fprintf(output, "pop bx\n");
 }
 
@@ -1014,9 +1197,9 @@ void DoWithConstant(int8_t cmdNum, double constant, CodegenContext* context) {
     EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
 }
 
-void DoToRegister(int8_t cmdNum, CodegenContext* context) {
+void DoToRegister(int8_t cmdNum, int8_t regNum, CodegenContext* context) {
     EmitCommand(cmdNum, context->result);                                                                            
-    NewArgument(REGISTER_FLAGS, 0, 1, nullptr, -1, nullptr, context);                                                              
+    NewArgument(REGISTER_FLAGS, 0, regNum, nullptr, -1, nullptr, context);                                                              
     EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
 }
 

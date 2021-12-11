@@ -1,0 +1,7 @@
+main begin
+a[5] in 1, 2, 7 dot $
+
+cry a[2] dot
+
+lilEnd
+bigEnd

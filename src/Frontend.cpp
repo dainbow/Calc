@@ -2,6 +2,7 @@
     F::= V 'with' {V,}* begin {K | S}* 'lilEnd'
     K::= VasyaSniff | NextSniff | Homyak | Hire 
     S::= (V 'in' DIFF) | (DIFF 'to' V) | DIFF EOL_OP
+    DIFF::= E' || E
     E::= STR | T{[+-]T}*
     T::= {-}DEG{[*\]DEG}*
     DEG::= P{^P}

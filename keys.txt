@@ -15,3 +15,4 @@ cry
 dot
 gobble
 diff
+show

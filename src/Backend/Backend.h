@@ -1,5 +1,7 @@
 #pragma once
 
+#include "TXLib.h"
+
 #include "../Tree/Tree.h"
 #include "../Tree/Graph.h"
 
@@ -85,6 +87,7 @@ void EnterFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context);
 void ExitFuncVisibilityZone(Node* AST, FILE* output, CodegenContext* context);
 
 uint32_t MakeLocalVar(int8_t* name, CodegenContext* context);
+uint32_t MakeLocalArr(int8_t* name, int32_t length, CodegenContext* context);
 int32_t GetVarOffset(int8_t* name, CodegenContext* context);
 
 bool ProcessKeyword(Node* AST, FILE* output, CodegenContext* context);
@@ -112,5 +115,5 @@ void MakeString(const char stringName[], CodegenContext* context);
 void MakeLabel(const char labelName[], int32_t labelNumber, CodegenContext* context);
 
 void DoWithConstant(int8_t cmdNum, double constant, CodegenContext* context);
-void DoToRegister(int8_t cmdNum, CodegenContext* context);
+void DoToRegister(int8_t cmdNum, int8_t regNum, CodegenContext* context);
 void DoToMem(int8_t cmdNum, double offset, CodegenContext* context);

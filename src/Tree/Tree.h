@@ -33,6 +33,7 @@ enum class NodeDataTypes: int8_t {
     TYPE_KEYWORD = 5,
     TYPE_FUNC    = 6,
     TYPE_STR     = 7,
+    TYPE_ARR     = 8,
 };
 
 enum KeyWords {
@@ -53,6 +54,7 @@ enum KeyWords {
     KEY_DOT,
     KEY_GOBBLE,
     KEY_DIFF,
+    KEY_SHOW,
 };
 
 enum Operators {
@@ -109,7 +111,6 @@ const char G_STANDART_NAME[] = "graph";
 
 const char OPEN_BRACKET  = '(';
 const char CLOSE_BRACKET = ')';
-const int8_t E_CONST[]       = "e";
 const char SIN_OP        = 's';
 const char COS_OP        = 'c';
 const char LOG_OP        = 'l';

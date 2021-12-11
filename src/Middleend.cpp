@@ -39,6 +39,8 @@ int main(int argc, char* argv[]) {
 
     DropTreeOnDisk(&ASTREADED, outputFile);
     TreeDtor(&ASTREADED);
+
+    printf("[Mid] Successfully ended tree optimisation\n");
 }
 
 void OptimizeAST(Node* node) {

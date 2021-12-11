@@ -19,7 +19,6 @@ const int32_t MAX_TRASH_SIZE       = 100;
 const int32_t MAX_NODE_DATA_LENGTH = 20;
 
 const char TEX_NAME[]              = "latex";
-
 const char MATH_PHRASES[]          = "MathPhrases.txt";
 const char GREEK_SYMBOLS[]         = "GreekSymbols.txt";
 

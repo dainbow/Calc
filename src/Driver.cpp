@@ -42,9 +42,9 @@ int main(int argc, char* argv[]) {
 
             DeleteFormat(outputFile);
 
-            frontEnd  += sprintf(frontEnd, "-o %s", outputFile);
-            middleEnd += sprintf(middleEnd, "-i %s -o %s", outputFile, outputFile);
-            backEnd   += sprintf(backEnd, "-i %s -o %s", outputFile, outputFile);
+            frontEnd  += sprintf(frontEnd, "-o %s ", outputFile);
+            middleEnd += sprintf(middleEnd, "-i %s -o %s ", outputFile, outputFile);
+            backEnd   += sprintf(backEnd, "-i %s -o %s ", outputFile, outputFile);
         }
 
         if (!strcmp(argv[curArg], "-frontG")) {

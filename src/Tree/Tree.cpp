@@ -48,6 +48,7 @@ Node* MakeNewNode(int8_t operation, double number, int8_t* expression, NodeDataT
         case NodeDataTypes::TYPE_UNO:
             newNode->data.operation = operation;
             break;
+        case NodeDataTypes::TYPE_ARR:
         case NodeDataTypes::TYPE_FUNC:
         case NodeDataTypes::TYPE_STR:
         case NodeDataTypes::TYPE_VAR:    
@@ -175,6 +176,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
         strcat(nodeData, (const char*)root->data.expression);
         strcat(nodeData, "()");
         break;
+    case NodeDataTypes::TYPE_ARR:
     case NodeDataTypes::TYPE_STR:
     case NodeDataTypes::TYPE_VAR:
         strcat(nodeData, (const char*)root->data.expression);

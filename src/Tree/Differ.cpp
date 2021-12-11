@@ -1,38 +1,5 @@
 #include "Differ.h"
 
-//TODO Замены, Маклорен, скобки в одинаковых операциях
-
-/*int main () {
-    TreeCtor(tree);
-    TreeCtor(diffedTree);
-    StackCtor(bigStack);
-
-    Text mathPhrases  = {};
-    Text greekSymbols = {};
-    MakeText(&mathPhrases,  MATH_PHRASES);
-    MakeText(&greekSymbols, GREEK_SYMBOLS);
-    DiffContext diffContext = {&mathPhrases, &greekSymbols, &bigStack}; 
-
-    ReadTreeFromFile(&tree, "Gachi.txt");
-    MakeTreeGraph(&tree, G_STANDART_NAME);
-    
-    char* outputName = nullptr;
-    FILE* output     = StartTex(&tree, &outputName, &diffContext);
-
-    diffedTree.root  = Differentiate(tree.root, output, &diffContext, 1);
-
-    MakeTreeGraph(&diffedTree, G_STANDART_NAME);
-    OptimisationAfterDiff(&diffedTree);
-
-    StopTex(output, outputName, tree.root, diffedTree.root, &diffContext);
-
-    StackDtor(&bigStack);
-    TreeDtor(&diffedTree);
-    TreeDtor(&tree);
-    
-    printf("END\n");
-}*/
-
 int32_t Convert1251ToUtf8 (const char* input, char* output) {
     assert (input    != nullptr);
     assert (output   != nullptr);
@@ -128,6 +95,8 @@ int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
 #define CONST_NODE(smth)   MakeNewNode(0, smth, 0, NodeDataTypes::TYPE_CONST, nullptr, nullptr)
 #define VAR_NODE(smth)     MakeNewNode(0, 0, smth, NodeDataTypes::TYPE_VAR, nullptr, nullptr)     
 
+static int8_t E_CONST[] = "e";
+
 Node* Differentiate (Node* root) {
     assert(root        != nullptr);
 
@@ -161,7 +130,7 @@ Node* Differentiate (Node* root) {
                 break;
 
             case (int32_t)LOG_OP: 
-                returningRoot = DIV(D(R), MUL(LOG(VAR_NODE((int8_t*)E_CONST), C(L)), C(R)));
+                returningRoot = DIV(D(R), MUL(LOG(VAR_NODE(E_CONST), C(L)), C(R)));
                 break;
 
             case (int32_t)POW_OP: 
@@ -196,6 +165,7 @@ Node* Differentiate (Node* root) {
             break;
         }
         break;
+    case NodeDataTypes::TYPE_ARR:
     case NodeDataTypes::TYPE_FUNC:
     case NodeDataTypes::TYPE_STR:
     case NodeDataTypes::TYPE_KEYWORD:
@@ -289,11 +259,15 @@ int32_t FoldConst(Node* node) {
                 node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case DEQ_OP:
-                node->data.number = node->left->data.number == node->right->data.number;
+                node->data.number = 
+                (node->left->data.number <= node->right->data.number + __DBL_EPSILON__) &&
+                (node->left->data.number >= node->right->data.number - __DBL_EPSILON__);
                 node->type = NodeDataTypes::TYPE_CONST;
                 break;
             case NEQ_OP:
-                node->data.number = node->left->data.number != node->right->data.number;
+                node->data.number = 
+                (node->left->data.number > node->right->data.number + __DBL_EPSILON__) ||
+                (node->left->data.number < node->right->data.number - __DBL_EPSILON__);
                 node->type = NodeDataTypes::TYPE_CONST;
                 break;
             default: {
