@@ -21,13 +21,14 @@ const int32_t MAX_FILE_NAME_LENGTH  = 100;
 void ProcessFrontendminus1Arguments(int argc, char* argv[]);
 
 void FrontendMinusOne(Tree* AST);
-void PrintAST(Node* node, FILE* output);
+void PrintAST(Node* node, FILE* output, uint32_t depth);
 
 int32_t GetOperationPriority(int8_t operation);
 
-void PrintOperationMinus1(Node* node, FILE* output);
-void PrintFunction(Node* node, FILE* output);
-void PrintKeyword(Node* node, FILE* output);
+void PrintOperationMinus1(Node* node, FILE* output, uint32_t depth);
+void PrintFunction(Node* node, FILE* output, uint32_t depth);
+void PrintKeyword(Node* node, FILE* output, uint32_t depth);
 void PrintString(Node* node, FILE* output);
-void PrintArray(Node* node, FILE* output);
+void PrintArray(Node* node, FILE* output, uint32_t depth);
 
+void PrintIndent(uint32_t depth, FILE* output);

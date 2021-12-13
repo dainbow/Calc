@@ -172,8 +172,7 @@ void GenerateCode(Tree* AST) {
     StackCtor(offsetStack);
     context->offsetStack = &offsetStack;
     ContextCtor(context);
-    printf("FIRST ITER\n");
-
+    
     PUSH_CONST(BEGINNING_OF_GMEM);
     POP_TO_DX;
     CALL("main");
@@ -512,7 +511,6 @@ void ProcessIn(Node* AST, FILE* output, CodegenContext* context) {
     assert(context != nullptr);
     uint32_t varOffset = 0;
 
-    printf("IN with node type %d\n", AST->type);
     if (AST->left->type == NodeDataTypes::TYPE_VAR) {
         varOffset = MakeLocalVar(AST->left->data.expression, context);
         ASTBypass(AST->right, output, context);
@@ -1097,8 +1095,7 @@ uint32_t MakeLocalArr(int8_t* name, int32_t length, CodegenContext* context) {
         context->variables[context->offset].offset[context->recursionDepth] = context->offset;
 
         context->offset += length;
-        printf("Created arr %s with length %d\n", name, length);
-
+        
         return (context->offset - length); 
     }
     else {
@@ -1230,11 +1227,9 @@ void NewArgument(Flags flags, int32_t argConstant, int32_t reg, const char label
     if (labelName != nullptr) {                                                                 
         if (labelNum != -1) {
             sprintf((char*)context->arguments[context->amounts.argumentsAmount].labelName,  "%s%d", labelName, labelNum);  
-            printf("Created label %s%d\n", labelName, labelNum);
         } 
         else {
             sprintf((char*)context->arguments[context->amounts.argumentsAmount].labelName,  "%s", labelName); 
-            printf("Created label %s\n", labelName);
         }    
     }
     

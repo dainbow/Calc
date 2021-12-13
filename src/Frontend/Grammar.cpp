@@ -127,7 +127,6 @@ Node* GetF(Node** pointer) {
 Node* GetD(Node** pointer) {
     assert( pointer != nullptr);
     assert(*pointer != nullptr);
-    printf("Looking at node with type %d\n", (**pointer).type);
 
     if (((**pointer).type == NodeDataTypes::TYPE_KEYWORD) && ((**pointer).data.operation == KEY_DIFF)) {
         Node* diff = *pointer;
@@ -268,8 +267,7 @@ Node* GetS(Node** pointer) {
 
     Node* retValue       = 0;
     Node* ptrToSkipped   = SkipThings(pointer);
-    printf("PtrToskipped's type is %d and op is %d\n", ptrToSkipped->type, ptrToSkipped->data.operation);
-
+    
     if ((ptrToSkipped->type == NodeDataTypes::TYPE_KEYWORD) &&
         (ptrToSkipped->data.operation == KEY_IN)) {
         retValue       = ptrToSkipped;
@@ -547,12 +545,9 @@ Node* GetN(Node** pointer) {
     assert(*pointer != nullptr);
 
     Node* retValue = *pointer;
-    printf("Looking at type %d with op %d\n", (*pointer)->type, (*pointer)->data.operation);
     (*pointer)++;
 
     if ((*retValue).type != NodeDataTypes::TYPE_CONST) {
-
-
         assert(FAIL && "INVALID RETURN FOR GET N FUNCTION");
     } 
 

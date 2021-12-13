@@ -19,7 +19,6 @@ ProcStackElem FindLabelByName(int8_t lblName[], Labels* labels) {
     assert(labels  != nullptr);
 
     for (uint32_t curLbl = 0; (labels->array[curLbl].go != -1) && (curLbl < MAX_LABEL_AMOUNT); curLbl++) {
-        printf("Comparing labels %s and %s\n", lblName, labels->array[curLbl].name);
         if (strcmp((const char*)lblName, (const char*)labels->array[curLbl].name) == 0) {
             return (ProcStackElem)labels->array[curLbl].go;
         }
@@ -68,7 +67,6 @@ void EmitArgs(int32_t cmdNum, CompileResult* output, Arguments* comArgs, Labels*
 
     //!EmitConstant                                                                                                                                 
     if (comArgs->argFlags.constant) {                  
-        printf("Writing constant %d\n", comArgs->argConst);                                                                                
         *(ProcStackElem*)(output->bytesArray + output->bytesCount) = comArgs->argConst;                                                                
                       output->bytesCount += CONST_ARGUMENT_SIZE;                                                                                               
     }                                                                                                                                           

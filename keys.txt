@@ -16,4 +16,3 @@ dot
 gobble
 diff
 show
-paint

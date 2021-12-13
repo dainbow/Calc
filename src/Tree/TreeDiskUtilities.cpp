@@ -19,7 +19,7 @@ void DropTreeOnDisk(Tree* AST, char* outputF) {
 
     BypassTreeToDiskDrop(AST->root, &outputB);
 
-    printf("Tree droped in '%s', size if %llu\n", endName, fwrite(outputB.bytesArray, 
+    printf("Tree droped in '%s', size is %llu\n", endName, fwrite(outputB.bytesArray, 
                                       sizeof(outputB.bytesArray[0]), outputB.bytesCount, output));
 
     fclose(output);
@@ -116,7 +116,6 @@ Node* ReadTreeFromDisk(Text* treeText, uint64_t* curByte) {
     *curByte += sizeof(Node*);
 
     retValue = MakeNewNode(curData.operation, curData.number, curData.expression, curType, 0, 0);
-    printf("Made node with type %d\n", retValue->type);
 
     if ((leftPtr != 0) &&
         (rightPtr != 0)) {
