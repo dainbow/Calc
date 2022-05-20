@@ -1,4 +1,5 @@
 #include "./Backend/Backend.h"
+#include "./Backend/X86_Backend.h"
 
 #define LABEL_FLAGS     {0, 1, 0, 0, 0}
 #define NONE_FLAGS      {0, 0, 0, 0, 0}
@@ -62,6 +63,7 @@
 #define MKWND SINGULAR_OP(40)
 #define DRWPC SINGULAR_OP(4)
 
+bool isX86       = 0;
 bool isLog       = 0;
 bool isShowTree  = 0;
 
@@ -91,7 +93,10 @@ int main(int argc, char* argv[]) {
         MakeTreeGraph(&ASTREADED, G_STANDART_NAME);
     }
 
-    GenerateCode(&ASTREADED);
+    if (isX86 == 0)
+        GenerateCode(&ASTREADED);
+    else
+        X86_GenerateCode(&ASTREADED, outputName);
 
     TreeDtor(&ASTREADED);
 }
@@ -150,6 +155,10 @@ void ProcessBackEndArgs(int argc, char* argv[]) {
 
         if (!strcmp(argv[curArg], "-o")) {
             outputName = argv[curArg + 1];
+        }
+
+        if (!strcmp(argv[curArg], "-mx86")) {
+            isX86 = 1;
         }
     }
 }
@@ -1284,4 +1293,3 @@ void DoToMem(int8_t cmdNum, int8_t regNum, double offset, CodegenContext* contex
     NewArgument(TO_MEM_FLAGS, (ProcStackElem)(offset * ACCURACY), regNum, nullptr, -1, (char*)nullptr, context);                                          
     EmitArgs(cmdNum, context->result, context->arguments + context->amounts.argumentsAmount - 1, context->labels);
 }
-

@@ -1,6 +1,6 @@
-#pragma once
+#ifndef _DIFFER_H_
+#define _DIFFER_H_
 
-#include <windows.h>
 #include <stdlib.h>
 
 #include "../Tree/Tree.h"
@@ -28,8 +28,6 @@ bool ReadTreeFromFile(Tree* tree, const char* inputFile);
 int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type);
 Node* MakeTreeFromStack(Stack* nodesStack);
 
-int32_t Convert1251ToUtf8 (const char* input, char* output);
-
 Node* Differentiate (Node* root);
 Node* Copy (Node* root);
 Node* MakeFactor(int32_t factor);
@@ -45,3 +43,5 @@ int32_t CheckForVars(Node* node);
 void SubstituteVars(Node* node, int8_t* varData, int32_t value);
 
 bool CheckDoubleEquality(double first, double second);
+
+#endif

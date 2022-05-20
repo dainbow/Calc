@@ -1,0 +1,26 @@
+Solve with k1, k2 begin
+    vasyaSniff k1 == 0 begin
+        vasyaSniff k2 == 0 begin
+            cry "The equation has infinity amount of roots" dot
+        lilEnd
+        someoneSniff begin
+            cry "The equation doesn't have roots" dot
+        lilEnd
+    lilEnd
+    nextSniff k2 == 0 begin
+        cry "The equation has 1 root = 0" dot
+    lilEnd
+    someoneSniff begin
+        cry "The equation has 1 root = ", -k2 / k1 dot
+    lilEnd
+lilEnd
+
+main begin
+
+    cry "Enter coefficients k and b of the kx + b = 0 equation:" dot
+
+    gobble k, b dot
+
+    Solve(k,b) $
+lilEnd
+bigEnd

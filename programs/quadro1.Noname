@@ -1,5 +1,18 @@
+Sqrt with a begin
+	b in 0 $
+	result in 0 $
+
+	hire b from 0 to 10000 begin
+		vasyaSniff (b * b <= a) begin
+			result in b $
+		lilEnd
+	lilEnd
+
+	spit result $
+lilEnd
+
 CalculateD with a, b, c begin
-	b in diff b^3/3 $
+	b in (b * b) $
 	spit b - 4*a*c $
 lilEnd
 
@@ -13,13 +26,13 @@ SolveLinear with b, c begin
 		lilEnd
 	lilEnd
 	someoneSniff begin
-		cry "The equation has 1 root", -c / b dot
+		cry "The equation has 1 root ", -c / b dot
 	lilEnd
 lilEnd
 
 main begin
 
-cry "Please enter a b c koefs of equation" dot
+cry "Please enter a b c koefs of the equation" dot
 gobble a, b, c dot
 
 vasyaSniff a == 0 begin
@@ -31,15 +44,15 @@ nextSniff b == 0 begin
 		cry "The equation doesn't have roots" dot
 	lilEnd
 	nextSniff c == 0 begin
-		cry "The equation has 1 root", 0 dot
+		cry "The equation has 1 root ", 0 dot
 	lilEnd
 	someoneSniff begin
-		cry "The equation has 2 roots", c ^ (1 / 2), -(c ^ (1 /2)) dot
+		cry "The equation has 2 roots ", Sqrt(c), " and ", -Sqrt(c) dot
 	lilEnd
 lilEnd
 
 nextSniff c == 0 begin
-	cry "The equation has 2 roots", 0, -b / a dot
+	cry "The equation has 2 roots ", 0, " and ", -b / a dot
 lilEnd
 
 someoneSniff begin
@@ -49,13 +62,13 @@ someoneSniff begin
 		cry "The equation doesnt have roots" dot
 	lilEnd
 	nextSniff d == 0 begin
-		cry "The equation has 1 root", -b / (2*a) dot
+		cry "The equation has 1 root ", -b / (2 * a) dot
 	lilEnd
 	someoneSniff begin
-		d in d ^ (1 / 2) $
-		cry "The equation has 2 roots", (-b + d) / (2 * a), (-b - d) / (2 * a) dot
+		d in Sqrt(d) $
+		cry "The equation has 2 roots ", (-b + d) / (2 * a), " and ", (-b - d) / (2 * a) dot
 	lilEnd
 lilEnd
 
-lilEnd 
-bigEnd
+	lilEnd
+	bigEnd

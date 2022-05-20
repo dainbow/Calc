@@ -1,7 +1,6 @@
 #include <assert.h>
-#include <io.h>
+#include <unistd.h>
 #include <string.h>
-#include <windows.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -13,17 +12,17 @@ bool ReadTextFromFile(Text *text, const char* inputFile) {
     assert(text != nullptr);
     assert(inputFile != nullptr);
 
-    int input = open(inputFile, O_RDONLY | O_BINARY, 0);
-    if (input == -1)
+    FILE* input = fopen(inputFile, "r");
+    if (input == NULL)
         return 0;
 
     text->bufSize = CountFileSize(input);
     text->buffer = (int8_t*)calloc(text->bufSize + 10, sizeof(text->buffer[0]));
     assert(text->buffer != nullptr);
 
-    read(input, text->buffer, (uint32_t)text->bufSize);
+    fread(text->buffer, (uint32_t)text->bufSize, sizeof(char), input);
 
-    close(input);
+    fclose(input);
     return 1;
 }
 
@@ -70,9 +69,10 @@ void ProcessStrings(Text* text) {
             {
             case ';':
                 text->strings[curString].length = curChar + 1;
+                [[fallthrough]]
             case '\r':
+                [[fallthrough]]
             case '\n':
-                text->strings[curString].value[curChar + 1] = '\0';
                 text->strings[curString].value[curChar] = '\0';
                 break;
             case ' ':

@@ -574,7 +574,9 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
     int64_t databaseCounter = 0;
     
     for (int8_t* curChar = text->buffer; (size_t)(curChar - beginning) < text->bufSize; curChar++) {
+        printf("B:%u %s %s %s %s\n", *curChar, curChar + 1, curChar + 2, curChar + 3);
         SkipSpaces(&curChar);
+        printf("A:%s\n", curChar);
         
         if (((*curChar >= 'A') && (*curChar <= 'Z')) || ((*curChar >= 'a') && (*curChar <= 'z'))) {
             int8_t* bufferRemember = tokens->database + databaseCounter;
@@ -589,7 +591,8 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
             curChar--;
             tokens->database[databaseCounter] = '\0';
             databaseCounter++;
-        
+            printf("%s\n", curChar);
+
             int8_t keywordNum = 0;
             if ((keywordNum = IsKeyword(bufferRemember, keywords))) {
                 tokens->array[tokensCounter].type            = NodeDataTypes::TYPE_KEYWORD;
@@ -604,8 +607,10 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
             
             tokensCounter++;
 
-            if (keywordNum == KEY_END)
+            if (keywordNum == KEY_END) {
+                printf("END\n");
                 break;
+            }
         }
         else if ((*curChar >= '0') && (*curChar <= '9')) {
             double value = 0;
@@ -724,7 +729,7 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
                     tokens->array[tokensCounter].type = NodeDataTypes::TYPE_OP;
                     break;
                 default:
-                    printf("%c[%d]\n", *curChar,*curChar);
+                    printf("%c[%x]\n", *curChar, *curChar);
                     assert(FAIL && "Invalid operator");
                     break;
             }
@@ -740,9 +745,13 @@ void AnalyseText(Text* text, Tokens* tokens, Text* keywords) {
 int8_t IsKeyword(int8_t* buffer, Text* keywords) {
     assert(buffer   != nullptr);
     assert(keywords != nullptr);
+    printf("CMP %s\n", buffer);
 
     for (uint32_t curStr = 0; curStr < keywords->strAmount; curStr++) {
+        printf("%s\n", keywords->strings[curStr].value);
+
         if (!strcmp((const char*)buffer, (const char*)keywords->strings[curStr].value)) {
+            printf("Detected key %s\n", keywords->strings[curStr].value);
             return (int8_t)(curStr + 1);
         }
     }

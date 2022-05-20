@@ -115,4 +115,4 @@ void MakeLabel(const char labelName[], int32_t labelNumber, CodegenContext* cont
 
 void DoWithConstant(int8_t cmdNum, double constant, CodegenContext* context);
 void DoToRegister(int8_t cmdNum, int8_t regNum, CodegenContext* context);
-void DoToMem(int8_t cmdNum, int8_t regNum, double offset, CodegenContext* context);
+void DoToMem(int8_t cmdNum, int8_t regNum, double offset, CodegenContext* context); 

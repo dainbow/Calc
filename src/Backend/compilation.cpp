@@ -25,7 +25,6 @@ ProcStackElem FindLabelByName(int8_t lblName[], Labels* labels) {
     }
 
     printf("LABEL %s\n", lblName);
-    assert(FAIL && "LABEL NOT FOUND");
     return 0;
 }
 

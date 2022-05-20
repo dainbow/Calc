@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _GRAMMAR_H_
+#define _GRAMMAR_H_
 
 //#include "TXLib.h"
 
@@ -54,3 +55,5 @@ Node* SkipThings(Node** pointer);
 
 void AnalyseText(Text* text, Tokens* tokens, Text* keywords);
 int8_t IsKeyword(int8_t* buffer, Text* keywords);
+
+#endif

@@ -1,35 +1,5 @@
 #include "Differ.h"
 
-int32_t Convert1251ToUtf8 (const char* input, char* output) {
-    assert (input    != nullptr);
-    assert (output   != nullptr);
-
-    int32_t inputLength = 0;
-    if ((inputLength = MultiByteToWideChar(1251, 0, input, -1, 0, 0)) == 0) {
-        return 0;
-    }
-
-    wchar_t* buffer = (wchar_t*)calloc(inputLength + 10, sizeof(buffer[0]));
-    if (MultiByteToWideChar(1251, 0, input, -1, buffer, inputLength) == 0) {
-        free(buffer);
-        return 0;
-    }
-
-    int32_t outputLength = 0;
-    if ((outputLength = WideCharToMultiByte(65001, 0, buffer, -1, 0, 0, 0, 0)) == 0) {
-        free(buffer);
-        return 0;
-    }
-
-    if (WideCharToMultiByte(65001, 0, buffer, -1, output, outputLength, 0, 0) == 0) {
-        free(buffer);
-
-        return 0;
-    }
-    free(buffer);
-    return outputLength;
-}
-
 int32_t ProcessNodeData(StackElem rawData, NodeDataTypes* type) {
     assert(rawData != nullptr);
     assert(type    != nullptr);

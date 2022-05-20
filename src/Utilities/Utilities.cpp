@@ -1,5 +1,5 @@
-#include <sys\stat.h>
-#include <windows.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include "Utilities.h"
 
@@ -46,13 +46,16 @@ bool MyStrCmp(const int8_t* str1, const int8_t* str2) {
     return 0;
 }
 
-size_t CountFileSize (int fd) {
-	assert(fd != -1);
+size_t CountFileSize (FILE* fd) {
+	assert(fd != NULL);
 	
-	struct stat fileStat = {};
-    fstat(fd, &fileStat);
-	
-	return fileStat.st_size;
+    uint64_t curPosition = ftell(fd);
+
+    fseek(fd, 0, SEEK_END);
+    uint64_t fileSize = ftell(fd);
+    fseek(fd, curPosition, SEEK_SET);
+
+	return fileSize;
 }
 
 void ScanIn(float* scannedValue) {

@@ -210,8 +210,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
         break;
     }
 
-    char dataConverted[MAX_NODE_DATA_LENGTH] = "";
-    Convert1251ToUtf8((const char*)nodeData, dataConverted);
+    char* dataConverted = nodeData;
 
     curNodeNumber++;    
     
@@ -233,7 +232,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
 
     if ((root->left != nullptr) && (root->right != nullptr))  {
         fprintf(output, 
-            "\t%lld[shape=plaintext, label = <"
+            "\t%ld[shape=plaintext, label = <"
             "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING= \"0\" CELLPADDING=\"4\">"
             "<TR>"
                 "<TD COLSPAN=\"2\">" TREE_TYPE "</TD>"
@@ -260,7 +259,7 @@ void PrintTreeNodes(Tree* tree, Node* root, FILE* output) {
     }
     else if ((root->left == nullptr) && (root->right != nullptr)) {
         fprintf(output, 
-            "\t%lld[shape=plaintext, label = <"
+            "\t%ld[shape=plaintext, label = <"
             "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING= \"0\" CELLPADDING=\"4\">"
             "<TR>"
                 "<TD COLSPAN=\"2\">" TREE_TYPE "</TD>"

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "TXLib.h"
-
 #include "../Tree/TreeDiskUtilities.h"
 #include "Grammar.h"
 

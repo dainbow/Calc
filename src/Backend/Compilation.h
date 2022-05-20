@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _COMPILATION_H_
+#define _COMPILATION_H_
 
 #include <stdlib.h>
 
@@ -6,7 +7,9 @@
 #include "../Utilities/Utilities.h"
 
 struct CompileResult {
+    size_t executeCount;
     size_t bytesCount;
+
     int8_t* bytesArray;
 };
 
@@ -52,3 +55,5 @@ bool OutArgsFilter (Flags argFlags);
 bool NoArgsFilter  (Flags argFlags);
 
 void FillArguments(Arguments* args);
+
+#endif

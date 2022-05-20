@@ -39,7 +39,7 @@ bool MyStrCmp(const int8_t*  str1, const int8_t* str2);
 //! @return Size of file in bytes
 //-------------------------------------------------------------------------------------------------------
 
-size_t CountFileSize (int fd);
+size_t CountFileSize (FILE* fd);
 
 void ScanIn(float* scannedValue);
 

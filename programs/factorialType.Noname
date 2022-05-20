@@ -9,12 +9,12 @@ lilEnd
 
 
 main begin
+	cry "Please enter n to calculate n!" dot
+	gobble a dot
 
-	hire somebofy from 1 to 100 begin
-		hire someone from 1 to 1000000 begin
-			out in fact(10) $
-		lilEnd
-	lilEnd
+	out in fact(a) $
+
+	cry "Factorial of ", a, " is ", out dot
 
 lilEnd
 
